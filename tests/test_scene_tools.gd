@@ -23,7 +23,8 @@ func test_scene_tools():
 		{"tool": "get_node_properties", "params": {"scene_path": "res://test_scene.tscn", "node_path": "MyChild"}},
 		{"tool": "load_sprite", "params": {"scene_path": "res://test_scene.tscn", "node_path": "MyChild", "texture_path": "res://icon.svg"}},
 		{"tool": "save_scene", "params": {"scene_path": "res://test_scene.tscn"}},
-		{"tool": "list_connections", "params": {"scene_path": "res://test_scene.tscn", "node_path": "MyChild"}}
+		{"tool": "list_connections", "params": {"scene_path": "res://test_scene.tscn", "node_path": "MyChild"}},
+		{"tool": "scene_create_inherited", "params": {"base_scene_path": "res://test_scene.tscn", "new_scene_path": "res://test_scene_inherited.tscn"}}
 	]
 	
 	for t in tests:

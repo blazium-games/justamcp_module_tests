@@ -23,5 +23,7 @@ func test_executor_schemas():
 		assert_eq(typeof(inputSchema), TYPE_DICTIONARY)
 		assert_true(inputSchema.has("type"))
 		assert_eq(str(inputSchema["type"]), "object")
-		assert_true(inputSchema.has("properties"))
-		assert_true(inputSchema.has("required"))
+		if inputSchema.has("properties"):
+			assert_eq(typeof(inputSchema["properties"]), TYPE_DICTIONARY)
+		if inputSchema.has("required"):
+			assert_eq(typeof(inputSchema["required"]), TYPE_ARRAY)

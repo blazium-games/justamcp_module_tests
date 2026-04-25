@@ -17,7 +17,10 @@ func test_input_tools():
 		{"tool": "simulate_mouse_click", "params": { "position": {"x": 100, "y": 100}, "button_index": 1, "pressed": true }},
 		{"tool": "simulate_mouse_move", "params": { "position": {"x": 200, "y": 200}, "relative": {"x": 10, "y": 10} }},
 		{"tool": "simulate_action", "params": { "action": "ui_accept", "pressed": true, "strength": 1.0 }},
-		{"tool": "simulate_sequence", "params": { "events": [ {"type": "key", "keycode": "Space", "pressed": true} ] }}
+		{"tool": "simulate_sequence", "params": { "events": [ {"type": "key", "keycode": "Space", "pressed": true} ] }},
+		{"tool": "input_record", "params": { "state": true }},
+		{"tool": "input_record", "params": { "state": false }},
+		{"tool": "input_replay", "params": { "sequence_buffer_id": "" }}
 	]
 	
 	for t in tests:

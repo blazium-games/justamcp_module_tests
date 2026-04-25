@@ -18,3 +18,9 @@ func test_resource_tools():
 	for t in tests:
 		var res = executor.execute_tool(t.tool, t.params)
 		assert_true(res.has("ok"), "Tool failed to return ok: " + t.tool)
+		
+	var resource_executor = ClassDB.instantiate("JustAMCPResourceExecutor")
+	if resource_executor:
+		var vid_res = resource_executor.read_resource("video://recordings")
+		assert_true(vid_res.has("ok") or vid_res.has("error"), "Resource execution failed entirely tracking video uri!")
+		resource_executor.free()

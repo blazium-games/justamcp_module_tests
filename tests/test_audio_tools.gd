@@ -18,7 +18,7 @@ func test_audio_tools():
 		{"tool": "set_audio_bus", "params": { "bus_name": "SFX", "volume_db": -5.0, "mute": false }},
 		{"tool": "add_audio_bus_effect", "params": { "bus_name": "SFX", "effect_type": "AudioEffectReverb" }},
 		{"tool": "add_audio_player", "params": { "node_path": "AudioRoot", "name": "MyAudioPlayer", "bus": "SFX", "autoplay": true }},
-		{"tool": "get_audio_info", "params": { "node_path": "AudioRoot/MyAudioPlayer" }}
+		{"tool": "audio_get_players_info", "params": { "node_path": "AudioRoot/MyAudioPlayer" }}
 	]
 	
 	for t in tests:

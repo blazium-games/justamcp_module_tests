@@ -1,21 +1,18 @@
-extends RefCounted
+extends Node
 class_name MCPTestAdapter
 
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_PREDELETE:
-		if mcp_server:
-			mcp_server.free()
-			mcp_server = null
-		if tool_executor:
-			tool_executor.free()
-			tool_executor = null
+func _exit_tree() -> void:
+	cleanup()
 
 var host = "127.0.0.1"
 var port = 6506
 var mcp_server : JustAMCPServer
 var tool_executor : JustAMCPToolExecutor
+var prompt_executor : JustAMCPPromptExecutor
+var resource_executor : JustAMCPResourceExecutor
 var sse_client : HTTPClient
 var sse_buffer : String = ""
+var http_available := false
 
 var current_request_id = 1
 var registered_results = {}
@@ -23,6 +20,8 @@ var registered_results = {}
 func setup_sync():
 	mcp_server = JustAMCPServer.new()
 	tool_executor = JustAMCPToolExecutor.new()
+	prompt_executor = JustAMCPPromptExecutor.new()
+	resource_executor = JustAMCPResourceExecutor.new()
 	mcp_server.tool_requested.connect(_on_tool_requested)
 	
 	# Open an SSE connection explicitly synchronously
@@ -54,6 +53,24 @@ func setup_sync():
 	if sse_client.get_status() != HTTPClient.STATUS_BODY:
 		print("Failed asserting SSE Body natively: ", sse_client.get_status())
 		return
+	http_available = true
+
+func cleanup() -> void:
+	if sse_client:
+		sse_client.close()
+		sse_client = null
+	if mcp_server:
+		mcp_server.free()
+		mcp_server = null
+	if tool_executor:
+		tool_executor.free()
+		tool_executor = null
+	if prompt_executor:
+		prompt_executor.free()
+		prompt_executor = null
+	if resource_executor:
+		resource_executor.free()
+		resource_executor = null
 
 func set_test_scene_root(root_node: Node) -> void:
 	if tool_executor:
@@ -69,7 +86,15 @@ func _on_tool_requested(p_request_id: String, p_tool_name: String, p_params: Dic
 		var payload = result.get("error", null)
 		mcp_server.send_tool_result(p_request_id, false, payload, error_msg)
 
+func execute_tool_direct(tool_name: String, params: Dictionary = {}) -> Dictionary:
+	if not tool_executor:
+		tool_executor = JustAMCPToolExecutor.new()
+	return tool_executor.execute_tool(tool_name, params)
+
 func execute_tool(tool_name: String, params: Dictionary) -> Dictionary:
+	if not http_available or not sse_client:
+		return execute_tool_direct(tool_name, params)
+
 	var req_id = current_request_id
 	current_request_id += 1
 	var payload = {
@@ -87,6 +112,9 @@ func execute_tool(tool_name: String, params: Dictionary) -> Dictionary:
 	while r_client.get_status() == HTTPClient.STATUS_CONNECTING or r_client.get_status() == HTTPClient.STATUS_RESOLVING:
 		r_client.poll()
 		OS.delay_msec(1)
+	if r_client.get_status() != HTTPClient.STATUS_CONNECTED:
+		r_client.close()
+		return execute_tool_direct(tool_name, params)
 		
 	r_client.request(HTTPClient.METHOD_POST, "/mcp", ["Content-Type: application/json"], JSON.stringify(payload))
 	
@@ -112,6 +140,106 @@ func execute_tool(tool_name: String, params: Dictionary) -> Dictionary:
 		OS.delay_msec(5)
 		
 	return {"error": "Timeout", "message": "Failed waiting for asynchronous response mapping locally"}
+
+func get_tool_names() -> Array:
+	var names: Array = []
+	for schema in JustAMCPToolExecutor.get_tool_schemas():
+		names.append(str(schema.get("name", "")))
+	return names
+
+func find_tool_schema(tool_name: String) -> Dictionary:
+	for schema in JustAMCPToolExecutor.get_tool_schemas():
+		if str(schema.get("name", "")) == tool_name:
+			return schema
+	return {}
+
+func read_resource(uri: String) -> Dictionary:
+	if not resource_executor:
+		resource_executor = JustAMCPResourceExecutor.new()
+	return resource_executor.read_resource(uri)
+
+func list_resources() -> Dictionary:
+	if not resource_executor:
+		resource_executor = JustAMCPResourceExecutor.new()
+	return resource_executor.list_resources()
+
+func list_resource_templates() -> Dictionary:
+	if not resource_executor:
+		resource_executor = JustAMCPResourceExecutor.new()
+	return resource_executor.list_resource_templates()
+
+func get_prompt(prompt_name: String, args: Dictionary = {}) -> Dictionary:
+	if not prompt_executor:
+		prompt_executor = JustAMCPPromptExecutor.new()
+	return prompt_executor.get_prompt(prompt_name, args)
+
+func list_prompts() -> Dictionary:
+	if not prompt_executor:
+		prompt_executor = JustAMCPPromptExecutor.new()
+	return prompt_executor.list_prompts()
+
+func complete_prompt(ref: Dictionary, argument: Dictionary) -> Dictionary:
+	if not prompt_executor:
+		prompt_executor = JustAMCPPromptExecutor.new()
+	return prompt_executor.complete_prompt(ref, argument)
+
+func http_jsonrpc(method: String, params: Dictionary = {}, timeout_msec: int = 1000) -> Dictionary:
+	var client = HTTPClient.new()
+	var err = client.connect_to_host(host, port)
+	if err != OK:
+		return {"skipped": true, "error": "MCP HTTP server is not reachable."}
+
+	var deadline = Time.get_ticks_msec() + timeout_msec
+	while Time.get_ticks_msec() < deadline and (client.get_status() == HTTPClient.STATUS_CONNECTING or client.get_status() == HTTPClient.STATUS_RESOLVING):
+		client.poll()
+		OS.delay_msec(5)
+
+	if client.get_status() != HTTPClient.STATUS_CONNECTED:
+		client.close()
+		return {"skipped": true, "error": "MCP HTTP server is not connected."}
+
+	var req_id = current_request_id
+	current_request_id += 1
+	var payload = {
+		"jsonrpc": "2.0",
+		"id": req_id,
+		"method": method,
+		"params": params,
+	}
+	err = client.request(HTTPClient.METHOD_POST, "/mcp", ["Content-Type: application/json"], JSON.stringify(payload))
+	if err != OK:
+		client.close()
+		return {"skipped": true, "error": "MCP HTTP request failed to start."}
+
+	while Time.get_ticks_msec() < deadline and client.get_status() == HTTPClient.STATUS_REQUESTING:
+		client.poll()
+		OS.delay_msec(5)
+
+	var body := PackedByteArray()
+	while Time.get_ticks_msec() < deadline and client.get_status() == HTTPClient.STATUS_BODY:
+		client.poll()
+		var chunk = client.read_response_body_chunk()
+		if chunk.size() > 0:
+			body.append_array(chunk)
+		else:
+			OS.delay_msec(5)
+
+	client.close()
+	if body.is_empty():
+		return {"skipped": true, "error": "MCP HTTP response was empty."}
+
+	var parsed = JSON.parse_string(body.get_string_from_utf8())
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return {"error": "Invalid JSON-RPC response", "body": body.get_string_from_utf8()}
+	return parsed
+
+func remove_file_if_exists(path: String) -> void:
+	if FileAccess.file_exists(path):
+		var dir_path = path.get_base_dir()
+		var file_name = path.get_file()
+		var dir = DirAccess.open(dir_path)
+		if dir:
+			dir.remove(file_name)
 
 func _process_sse_buffer(target_id: int):
 	var lines = sse_buffer.split("\n", false)

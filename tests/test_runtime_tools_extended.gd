@@ -6,8 +6,7 @@ func _assert_runtime_bridge_response(result: Dictionary, tool_name: String) -> v
 	assert_true(result.has("ok") or result.has("type") or result.has("message") or result.has("error"), "Runtime bridge tool should return a structured response: " + tool_name)
 
 func test_runtime_status_log_and_bridge_dependent_tools_are_structured() -> void:
-	var adapter = MCPTestAdapter.new()
-	add_child(adapter)
+	var adapter = MCPTestAdapter.create()
 	adapter.setup_sync()
 
 	var status = adapter.execute_tool_direct("blazium_get_runtime_status", {})
@@ -31,4 +30,4 @@ func test_runtime_status_log_and_bridge_dependent_tools_are_structured() -> void
 		assert_false(schema.is_empty(), "Runtime bridge schema should be exposed: " + tool_name)
 		assert_true(schema.has("inputSchema"), "Runtime bridge schema should include inputSchema: " + tool_name)
 
-	adapter.queue_free()
+	adapter.cleanup()

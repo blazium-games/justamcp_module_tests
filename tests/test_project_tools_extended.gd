@@ -3,8 +3,7 @@ extends AutoworkTest
 const MCPTestAdapter = preload("res://tests/mcp_test_adapter.gd")
 
 func test_project_mapping_settings_and_layer_tools() -> void:
-	var adapter = MCPTestAdapter.new()
-	add_child(adapter)
+	var adapter = MCPTestAdapter.create()
 	adapter.setup_sync()
 
 	var project_map = adapter.execute_tool_direct("blazium_project_map_project", {"lod": 0, "include_addons": false})
@@ -22,4 +21,4 @@ func test_project_mapping_settings_and_layer_tools() -> void:
 	var autoload_list = adapter.execute_tool_direct("blazium_project_manage_autoloads", {"action": "list"})
 	assert_true(autoload_list.has("ok") or autoload_list.has("autoloads"), "project_manage_autoloads list should be structured")
 
-	adapter.queue_free()
+	adapter.cleanup()

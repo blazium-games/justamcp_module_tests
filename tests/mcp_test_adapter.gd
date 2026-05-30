@@ -1,8 +1,8 @@
-extends Node
+extends RefCounted
 class_name MCPTestAdapter
 
-func _exit_tree() -> void:
-	cleanup()
+static func create(_parent: Node = null):
+	return load("res://tests/mcp_test_adapter.gd").new()
 
 var host = "127.0.0.1"
 var port = 6506

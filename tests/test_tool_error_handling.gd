@@ -1,5 +1,7 @@
 extends AutoworkTest
 
+const MCPTestFixtures = preload("res://tests/mcp_test_fixtures.gd")
+
 var executor: Object
 
 func _before_each():
@@ -7,7 +9,7 @@ func _before_each():
 	
 
 func test_executor_tools_argument_validation():
-	var schemas = JustAMCPToolExecutor.get_tool_schemas()
+	var schemas = MCPTestFixtures.all_tool_schemas()
 	for schema in schemas:
 		var command_name = str(schema["name"])
 		# If the command has required arguments, passing {} should yield an error

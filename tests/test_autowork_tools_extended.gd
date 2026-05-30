@@ -7,8 +7,7 @@ func test_autowork_directory_and_script_tools() -> void:
 		print("Autowork module unavailable; skipping JustAMCP Autowork tool expansion test.")
 		return
 
-	var adapter = MCPTestAdapter.new()
-	add_child(adapter)
+	var adapter = MCPTestAdapter.create()
 	adapter.setup_sync()
 
 	var by_script_validation = adapter.execute_tool_direct("blazium_autowork_run_test_script", {"script_path": "res://tests/test_autowork_tools_extended.gd"})
@@ -19,4 +18,4 @@ func test_autowork_directory_and_script_tools() -> void:
 	assert_false(by_directory_validation.get("ok", true), "run_tests_in_directory should block nested Autowork execution")
 	assert_true(str(by_directory_validation.get("error", "")).contains("already running"), "run_tests_in_directory should explain nested execution was blocked")
 
-	adapter.queue_free()
+	adapter.cleanup()

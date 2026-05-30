@@ -3,8 +3,7 @@ extends AutoworkTest
 const MCPTestAdapter = preload("res://tests/mcp_test_adapter.gd")
 
 func test_search_tools_and_guides_cover_new_catalog() -> void:
-	var adapter = MCPTestAdapter.new()
-	add_child(adapter)
+	var adapter = MCPTestAdapter.create()
 
 	var search = adapter.execute_tool_direct("blazium_search_tools", {"query": "docs"})
 	assert_true(search.get("ok", false), "search_tools should succeed")
@@ -21,11 +20,10 @@ func test_search_tools_and_guides_cover_new_catalog() -> void:
 	assert_true(guide.has("content"), "Guide should include compatibility content")
 	assert_true(str(guide["content"]).contains("JustAMCP"), "Tool index guide should mention JustAMCP")
 
-	adapter.queue_free()
+	adapter.cleanup()
 
 func test_execute_tool_delegates_and_blocks_nested_batch() -> void:
-	var adapter = MCPTestAdapter.new()
-	add_child(adapter)
+	var adapter = MCPTestAdapter.create()
 
 	var delegated = adapter.execute_tool_direct("blazium_execute_tool", {"tool_name": "get_guide", "arguments": ""})
 	assert_true(delegated.get("ok", false), "execute_tool should delegate to get_guide with empty args")
@@ -42,4 +40,4 @@ func test_execute_tool_delegates_and_blocks_nested_batch() -> void:
 	assert_eq(batch.get("count", 0), 2, "batch_execute should evaluate both steps when stop_on_error=false")
 	assert_eq(batch.get("completed", 0), 1, "Nested batch step should not count as completed")
 
-	adapter.queue_free()
+	adapter.cleanup()

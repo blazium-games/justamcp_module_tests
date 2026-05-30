@@ -1,12 +1,13 @@
 extends AutoworkTest
 
 const MCPTestAdapter = preload("res://tests/mcp_test_adapter.gd")
+const MCPTestFixtures = preload("res://tests/mcp_test_fixtures.gd")
 
 func _tool_names() -> Array:
-	var adapter = MCPTestAdapter.new()
-	add_child(adapter)
+	MCPTestFixtures.enable_all_tool_categories()
+	var adapter = MCPTestAdapter.create()
 	var names = adapter.get_tool_names()
-	adapter.queue_free()
+	adapter.cleanup()
 	return names
 
 func _assert_has_tools(names: Array, expected: Array) -> void:

@@ -2,8 +2,7 @@ extends AutoworkTest
 const MCPTestAdapter = preload("res://tests/mcp_test_adapter.gd")
 
 func test_export_tools():
-	var executor = MCPTestAdapter.new()
-	add_child(executor)
+	var executor = MCPTestAdapter.create()
 	executor.setup_sync()
 	
 	var tests = [

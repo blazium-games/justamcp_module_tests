@@ -26,8 +26,7 @@ func test_blueprint_draw_environment_and_asset_tools_are_exercised() -> void:
 	add_child(root)
 	autoqfree(root)
 
-	var adapter = MCPTestAdapter.new()
-	add_child(adapter)
+	var adapter = MCPTestAdapter.create()
 	adapter.setup_sync()
 	adapter.set_test_scene_root(root)
 
@@ -46,4 +45,4 @@ func test_blueprint_draw_environment_and_asset_tools_are_exercised() -> void:
 
 	adapter.remove_file_if_exists("res://generated_test_assets/justamcp_asset_probe.png")
 	adapter.set_test_scene_root(null)
-	adapter.queue_free()
+	adapter.cleanup()

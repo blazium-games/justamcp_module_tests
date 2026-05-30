@@ -5,8 +5,7 @@ func test_autowork_tools():
 	if not ClassDB.class_exists("JustAMCPToolExecutor"):
 		return
 	
-	var executor = MCPTestAdapter.new()
-	add_child(executor)
+	var executor = MCPTestAdapter.create()
 	executor.setup_sync()
 	
 	var tests = [
@@ -28,4 +27,4 @@ func test_autowork_tools():
 			assert_true(data.has("failures"), "failures missing")
 
 	if executor:
-		executor.free()
+		executor.cleanup()

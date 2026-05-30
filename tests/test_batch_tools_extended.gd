@@ -8,8 +8,7 @@ func test_batch_add_nodes_and_execute_key_variants() -> void:
 	add_child(root)
 	autoqfree(root)
 
-	var adapter = MCPTestAdapter.new()
-	add_child(adapter)
+	var adapter = MCPTestAdapter.create()
 	adapter.setup_sync()
 	adapter.set_test_scene_root(root)
 
@@ -34,4 +33,4 @@ func test_batch_add_nodes_and_execute_key_variants() -> void:
 	assert_eq(execute_result.get("completed", 0), 2, "batch_execute should complete both safe steps")
 
 	adapter.set_test_scene_root(null)
-	adapter.queue_free()
+	adapter.cleanup()

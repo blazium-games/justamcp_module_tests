@@ -22,8 +22,7 @@ func _assert_readable(adapter: MCPTestAdapter, uri: String) -> Dictionary:
 	return result
 
 func test_resource_catalog_includes_new_blazium_surfaces() -> void:
-	var adapter = MCPTestAdapter.new()
-	add_child(adapter)
+	var adapter = MCPTestAdapter.create()
 
 	var listed = adapter.list_resources()
 	assert_true(listed.has("resources"), "Resource list should include resources")
@@ -64,11 +63,10 @@ func test_resource_catalog_includes_new_blazium_surfaces() -> void:
 	]:
 		assert_true(template_uris.has(uri_template), "Resource templates should include " + uri_template)
 
-	adapter.queue_free()
+	adapter.cleanup()
 
 func test_static_resources_guides_and_compatibility_uris_are_readable() -> void:
-	var adapter = MCPTestAdapter.new()
-	add_child(adapter)
+	var adapter = MCPTestAdapter.create()
 
 	for uri in [
 		"blazium://project/info",
@@ -85,11 +83,10 @@ func test_static_resources_guides_and_compatibility_uris_are_readable() -> void:
 	]:
 		_assert_readable(adapter, uri)
 
-	adapter.queue_free()
+	adapter.cleanup()
 
 func test_dynamic_script_and_docs_resources_are_readable() -> void:
-	var adapter = MCPTestAdapter.new()
-	add_child(adapter)
+	var adapter = MCPTestAdapter.create()
 
 	var script_path = "res://tests/temp_resource_surface_subject.gd"
 	var file = FileAccess.open(script_path, FileAccess.WRITE)
@@ -103,4 +100,4 @@ func test_dynamic_script_and_docs_resources_are_readable() -> void:
 	_assert_readable(adapter, "blazium://docs/class/Node")
 
 	adapter.remove_file_if_exists(script_path)
-	adapter.queue_free()
+	adapter.cleanup()

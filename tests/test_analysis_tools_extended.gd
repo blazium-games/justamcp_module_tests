@@ -8,8 +8,7 @@ func test_extended_analysis_aggregate_tools() -> void:
 	add_child(root)
 	autoqfree(root)
 
-	var adapter = MCPTestAdapter.new()
-	add_child(adapter)
+	var adapter = MCPTestAdapter.create()
 	adapter.setup_sync()
 	adapter.set_test_scene_root(root)
 
@@ -29,4 +28,4 @@ func test_extended_analysis_aggregate_tools() -> void:
 			assert_true(result.get("ok", false), "Aggregate analysis tool should succeed: " + item["tool"])
 
 	adapter.set_test_scene_root(null)
-	adapter.queue_free()
+	adapter.cleanup()

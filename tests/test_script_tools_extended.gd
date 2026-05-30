@@ -11,8 +11,7 @@ func _write_temp_script() -> String:
 	return path
 
 func test_find_symbols_patch_validate_and_search_script_tools() -> void:
-	var adapter = MCPTestAdapter.new()
-	add_child(adapter)
+	var adapter = MCPTestAdapter.create()
 	adapter.setup_sync()
 
 	var path = _write_temp_script()
@@ -38,4 +37,4 @@ func test_find_symbols_patch_validate_and_search_script_tools() -> void:
 	assert_true(search.has("ok"), "search_in_scripts should return ok")
 
 	adapter.remove_file_if_exists(path)
-	adapter.queue_free()
+	adapter.cleanup()

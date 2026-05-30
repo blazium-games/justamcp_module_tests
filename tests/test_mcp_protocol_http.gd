@@ -9,15 +9,14 @@ func _request_or_skip(adapter: MCPTestAdapter, method: String, params: Dictionar
 	return response
 
 func test_guarded_mcp_http_protocol_endpoints() -> void:
-	var adapter = MCPTestAdapter.new()
-	add_child(adapter)
+	var adapter = MCPTestAdapter.create()
 
 	var initialize = _request_or_skip(adapter, "initialize", {
 		"clientInfo": {"name": "justamcp_module_tests", "version": "1.0"},
 		"protocolVersion": "2024-11-05",
 	})
 	if initialize.get("skipped", false):
-		adapter.queue_free()
+		adapter.cleanup()
 		return
 	assert_true(initialize.has("result"), "initialize should return result")
 	assert_true(initialize["result"].has("capabilities"), "initialize should expose capabilities")
@@ -35,4 +34,4 @@ func test_guarded_mcp_http_protocol_endpoints() -> void:
 		assert_false(response.get("skipped", false), "HTTP server should remain reachable after initialize")
 		assert_true(response.has("result") or response.has("error"), "JSON-RPC endpoint should return result or error: " + item["method"])
 
-	adapter.queue_free()
+	adapter.cleanup()

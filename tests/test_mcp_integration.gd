@@ -4,13 +4,12 @@ class_name TestMCPIntegration
 const MCPTestAdapter = preload("res://tests/mcp_test_adapter.gd")
 
 func test_integration_flow():
-	var adapter = MCPTestAdapter.new()
-	add_child(adapter)
+	var adapter = MCPTestAdapter.create()
 	adapter.setup_sync()
 
 	if not adapter.http_available:
 		print("Skipping MCP integration HTTP assertions: MCP HTTP server is not connected.")
-		adapter.queue_free()
+		adapter.cleanup()
 		return
 
 	var parsed = await adapter.http_jsonrpc("initialize", {
@@ -26,4 +25,4 @@ func test_integration_flow():
 	assert_true(tools.get("result", {}).has("tools"), "Contains tools boundaries")
 	assert_true(tools["result"]["tools"].size() > 0, "Tool list must naturally populate bounds natively")
 
-	adapter.queue_free()
+	adapter.cleanup()

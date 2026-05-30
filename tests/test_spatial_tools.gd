@@ -21,8 +21,7 @@ func test_spatial_tools():
 	nav.name = "NavRegion"
 	root_node.add_child(nav)
 	
-	var executor = MCPTestAdapter.new()
-	add_child(executor)
+	var executor = MCPTestAdapter.create()
 	executor.setup_sync()
 	executor.set_test_scene_root(root_node)
 	

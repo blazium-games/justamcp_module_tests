@@ -7,8 +7,7 @@ func test_script_tools():
 	add_child(root_node)
 	autoqfree(root_node)
 	
-	var executor = MCPTestAdapter.new()
-	add_child(executor)
+	var executor = MCPTestAdapter.create()
 	executor.setup_sync()
 	executor.set_test_scene_root(root_node)
 	

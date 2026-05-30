@@ -14,6 +14,40 @@ config/name="JustAMCP Module Tests"
 config/features=PackedStringArray("4.3.2", "Forward Plus")
 config/test_mock="test"
 
+[blazium]
+
+justamcp/override_editor_settings=true
+justamcp/server_enabled=true
+justamcp/tools/editor_tools=true
+justamcp/tools/documentation_tools=true
+justamcp/tools/scene_tools=true
+justamcp/tools/networking_tools=true
+justamcp/tools/multiuser_tools=true
+justamcp/tools/spatial_tools=true
+justamcp/tools/runtime_tools=true
+justamcp/tools/resource_tools=true
+justamcp/tools/animation_tools=true
+justamcp/tools/project_tools=true
+justamcp/tools/profiling_tools=true
+justamcp/tools/export_tools=true
+justamcp/tools/batch_tools=true
+justamcp/tools/script_tools=true
+justamcp/tools/node_tools=true
+justamcp/tools/audio_tools=true
+justamcp/tools/input_tools=true
+justamcp/tools/particle_tools=true
+justamcp/tools/physics_tools=true
+justamcp/tools/scene3d_tools=true
+justamcp/tools/shader_tools=true
+justamcp/tools/theme_tools=true
+justamcp/tools/tilemap_tools=true
+justamcp/tools/asset_tools=true
+justamcp/tools/blueprint_tools=true
+justamcp/tools/draw_tools=true
+justamcp/tools/environment_tools=true
+justamcp/tools/analysis_tools=true
+justamcp/tools/autowork_tools=true
+
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/gut/plugin.cfg")

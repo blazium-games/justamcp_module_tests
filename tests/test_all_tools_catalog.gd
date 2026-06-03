@@ -34,6 +34,32 @@ func test_meta_tools_always_present() -> void:
 	for tool_name in ["blazium_search_tools", "blazium_execute_tool", "blazium_get_guide"]:
 		assert_true(names.has(tool_name), "Meta tool should be present: " + tool_name)
 
+func test_optional_task_support_on_long_running_tools() -> void:
+	var optional_tools := [
+		"blazium_batch_execute",
+		"blazium_editor_reload_project",
+		"blazium_editor_play_scene",
+		"blazium_export_project",
+	]
+	for tool_name in optional_tools:
+		var schema := _find_schema(tool_name)
+		assert_false(schema.is_empty(), "Expected tool schema: " + tool_name)
+		var execution = schema.get("execution", {}) as Dictionary
+		assert_eq(str(execution.get("taskSupport", "")), "optional", tool_name + " should allow task-augmented execution")
+
+func test_forbidden_task_support_on_fast_tools() -> void:
+	var schema := _find_schema("blazium_project_list_settings")
+	assert_false(schema.is_empty(), "project_list_settings should exist")
+	if schema.has("execution"):
+		var execution = schema["execution"] as Dictionary
+		assert_ne(str(execution.get("taskSupport", "forbidden")), "optional", "Fast tools should not be optional-task by default")
+
+func _find_schema(tool_name: String) -> Dictionary:
+	for schema in MCPTestFixtures.all_tool_schemas():
+		if str(schema.get("name", "")) == tool_name:
+			return schema
+	return {}
+
 func _tool_names() -> Array:
 	var names: Array = []
 	for schema in MCPTestFixtures.all_tool_schemas():

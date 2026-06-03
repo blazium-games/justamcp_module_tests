@@ -18,9 +18,10 @@ config/test_mock="test"
 
 justamcp/override_editor_settings=true
 justamcp/server_enabled=true
+justamcp/list_page_size=5
+justamcp/task_max_concurrent=3
+justamcp/mcp_log_buffer_size=20
 justamcp/tools/editor_tools=true
-justamcp/tools/documentation_tools=true
-justamcp/tools/scene_tools=true
 justamcp/tools/networking_tools=true
 justamcp/tools/multiuser_tools=true
 justamcp/tools/spatial_tools=true
@@ -50,4 +51,15 @@ justamcp/tools/autowork_tools=true
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/gut/plugin.cfg")
+enabled=PackedStringArray()
+
+[input]
+
+ui_accept={
+"deadzone": 0.5,
+"events": "res://tests/fixtures/sample.gd"
+}
+
+[justamcp]
+
+go_test/custom_flag=""

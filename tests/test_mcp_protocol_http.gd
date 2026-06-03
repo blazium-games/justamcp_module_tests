@@ -29,6 +29,12 @@ func test_guarded_mcp_http_protocol_endpoints() -> void:
 		{"method": "resources/list", "params": {}},
 		{"method": "resources/templates/list", "params": {}},
 		{"method": "resources/read", "params": {"uri": "blazium://guide/tool-index"}},
+		{"method": "tasks/list", "params": {}},
+		{"method": "logging/setLevel", "params": {"level": "info"}},
+		{"method": "completion/complete", "params": {
+			"ref": {"type": "ref/prompt", "name": "blazium_context"},
+			"argument": {"name": "mode", "value": "st"},
+		}},
 	]:
 		var response = _request_or_skip(adapter, item["method"], item["params"])
 		assert_false(response.get("skipped", false), "HTTP server should remain reachable after initialize")

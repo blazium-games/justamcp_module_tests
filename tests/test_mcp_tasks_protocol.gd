@@ -25,7 +25,7 @@ func test_task_augmented_batch_execute_lifecycle() -> void:
 	var task_id := str(task_block.get("taskId", ""))
 	assert_false(task_id.is_empty(), "create task result should include taskId")
 
-	var terminal := {"completed", "failed", "cancelled"}
+	var terminal = ["completed", "failed", "cancelled"]
 	var status := "working"
 	var guard := 0
 	while not terminal.has(status) and guard < 60:

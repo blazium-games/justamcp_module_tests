@@ -41,7 +41,7 @@ func test_streamable_delete_session_invalidates_session() -> void:
 		adapter.cleanup()
 		return
 
-	var session_id := adapter.streamable_session_id
+	var session_id: String = adapter.streamable_session_id
 	var del_res = adapter.streamable_delete_session(3000)
 	assert_true(del_res.get("ok", false), "DELETE /mcp should complete")
 

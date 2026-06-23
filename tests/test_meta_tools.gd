@@ -17,8 +17,8 @@ func test_search_tools_and_guides_cover_new_catalog() -> void:
 
 	var guide = adapter.execute_tool_direct("blazium_get_guide", {"topic": "tool-index"})
 	assert_true(guide.get("ok", false), "get_guide should read tool-index")
-	assert_true(guide.has("content"), "Guide should include compatibility content")
-	assert_true(str(guide["content"]).contains("JustAMCP"), "Tool index guide should mention JustAMCP")
+	assert_true(guide.has("text"), "Guide should include text content")
+	assert_true(str(guide["text"]).contains("JustAMCP"), "Tool index guide should mention JustAMCP")
 
 	adapter.cleanup()
 

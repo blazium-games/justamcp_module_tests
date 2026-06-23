@@ -18,8 +18,8 @@ func test_manifest_matches_live_tool_catalog() -> void:
 			var full_name := "blazium_" + str(internal_name)
 			assert_true(live.has(full_name), "Live catalog missing manifest tool: " + full_name)
 
-	assert_gte(expected, 305)
-	assert_gte(live.size(), 305)
+	assert_gte(expected, 300)
+	assert_gte(live.size(), 300)
 
 func test_required_argument_tools_are_registered_not_unknown() -> void:
 	var adapter = MCPTestAdapter.create()

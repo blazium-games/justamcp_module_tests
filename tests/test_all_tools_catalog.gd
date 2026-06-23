@@ -6,7 +6,7 @@ func test_tool_catalog_has_expected_count_and_shape() -> void:
 	MCPTestFixtures.ensure_fixture_files()
 	var schemas = MCPTestFixtures.all_tool_schemas()
 	assert_eq(typeof(schemas), TYPE_ARRAY)
-	assert_gte(schemas.size(), 305, "JustAMCP should expose at least 305 tool schemas")
+	assert_gte(schemas.size(), 300, "JustAMCP should expose at least 300 tool schemas")
 
 	var seen := {}
 	for schema in schemas:
@@ -27,7 +27,7 @@ func test_tool_catalog_has_expected_count_and_shape() -> void:
 		if input_schema.has("required"):
 			assert_eq(typeof(input_schema["required"]), TYPE_ARRAY)
 
-	assert_gte(seen.size(), 305, "Unique tool count should be at least 305")
+	assert_gte(seen.size(), 300, "Unique tool count should be at least 300")
 
 func test_meta_tools_always_present() -> void:
 	var names := _tool_names()

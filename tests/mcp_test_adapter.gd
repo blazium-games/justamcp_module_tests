@@ -16,6 +16,7 @@ var resource_executor : JustAMCPResourceExecutor
 var sse_client : HTTPClient
 var sse_buffer : String = ""
 var http_available := false
+var use_stateless_http := false
 
 var current_request_id = 1
 var registered_results = {}
@@ -25,10 +26,24 @@ var streamable_get_client : HTTPClient
 var streamable_get_buffer := ""
 
 func setup_sync():
-	mcp_server = JustAMCPServer.new()
 	tool_executor = JustAMCPToolExecutor.new()
 	prompt_executor = JustAMCPPromptExecutor.new()
 	resource_executor = JustAMCPResourceExecutor.new()
+
+	# When the live JustAMCPServer is in this process, use the direct executor.
+	# Routing tools/call over HTTP on the main thread deadlocks against the same server.
+	var tree := Engine.get_main_loop()
+	if tree is SceneTree and tree.root.find_child("JustAMCPServer", true, false) != null:
+		return
+
+	# Stateless POST /mcp is what Cursor, Antigravity, Claude, and Go tests use.
+	var ping = http_jsonrpc_stateless("ping", {}, 3000)
+	if not ping.get("skipped", false) and not ping.has("error"):
+		http_available = true
+		use_stateless_http = true
+		return
+
+	mcp_server = JustAMCPServer.new()
 	mcp_server.tool_requested.connect(_on_tool_requested)
 
 	sse_client = HTTPClient.new()
@@ -57,6 +72,7 @@ func setup_sync():
 		print("Failed asserting SSE Body natively: ", sse_client.get_status())
 		return
 	http_available = true
+	use_stateless_http = false
 
 func cleanup() -> void:
 	if streamable_get_client:
@@ -78,6 +94,8 @@ func cleanup() -> void:
 		resource_executor.free()
 		resource_executor = null
 	streamable_session_id = ""
+	http_available = false
+	use_stateless_http = false
 
 func set_test_scene_root(root_node: Node) -> void:
 	if tool_executor:
@@ -99,6 +117,8 @@ func execute_tool_direct(tool_name: String, params: Dictionary = {}) -> Dictiona
 	return tool_executor.execute_tool(tool_name, params)
 
 func execute_tool(tool_name: String, params: Dictionary) -> Dictionary:
+	if use_stateless_http:
+		return _execute_tool_stateless(tool_name, params)
 	if not http_available or not sse_client:
 		return execute_tool_direct(tool_name, params)
 
@@ -138,10 +158,10 @@ func execute_tool(tool_name: String, params: Dictionary) -> Dictionary:
 				sse_buffer += chunk.get_string_from_utf8()
 				var opt_res = _process_sse_buffer(req_id)
 				if opt_res != null:
-					return opt_res
+					return _normalize_tool_result(opt_res)
 		OS.delay_msec(5)
 
-	return {"error": "Timeout", "message": "Failed waiting for asynchronous response mapping locally"}
+	return {"ok": false, "error": {"code": -32000, "message": "Failed waiting for asynchronous response mapping locally"}}
 
 func get_tool_names() -> Array:
 	var names: Array = []
@@ -161,14 +181,20 @@ func read_resource(uri: String) -> Dictionary:
 	return resource_executor.read_resource(uri)
 
 func list_resources() -> Dictionary:
+	return _collect_executor_pages(Callable(self, "_list_resources_page"), "resources")
+
+func _list_resources_page(cursor: String) -> Dictionary:
 	if not resource_executor:
 		resource_executor = JustAMCPResourceExecutor.new()
-	return resource_executor.list_resources()
+	return resource_executor.list_resources(cursor)
 
 func list_resource_templates() -> Dictionary:
+	return _collect_executor_pages(Callable(self, "_list_resource_templates_page"), "resourceTemplates")
+
+func _list_resource_templates_page(cursor: String) -> Dictionary:
 	if not resource_executor:
 		resource_executor = JustAMCPResourceExecutor.new()
-	return resource_executor.list_resource_templates()
+	return resource_executor.list_resource_templates(cursor)
 
 func get_prompt(prompt_name: String, args: Dictionary = {}) -> Dictionary:
 	if not prompt_executor:
@@ -176,9 +202,12 @@ func get_prompt(prompt_name: String, args: Dictionary = {}) -> Dictionary:
 	return prompt_executor.get_prompt(prompt_name, args)
 
 func list_prompts() -> Dictionary:
+	return _collect_executor_pages(Callable(self, "_list_prompts_page"), "prompts")
+
+func _list_prompts_page(cursor: String) -> Dictionary:
 	if not prompt_executor:
 		prompt_executor = JustAMCPPromptExecutor.new()
-	return prompt_executor.list_prompts()
+	return prompt_executor.list_prompts(cursor)
 
 func complete_prompt(ref: Dictionary, argument: Dictionary) -> Dictionary:
 	if not prompt_executor:
@@ -593,6 +622,79 @@ func _parse_sse_events(raw: String) -> Dictionary:
 
 	return {"events": events, "raw": raw}
 
+func _collect_executor_pages(fetch_page: Callable, result_key: String) -> Dictionary:
+	var all_items: Array = []
+	var cursor := ""
+	var guard := 0
+	while guard < 200:
+		guard += 1
+		var page: Dictionary = fetch_page.call(cursor)
+		if page.has("ok") and not page.get("ok", true):
+			return page
+		for item in page.get(result_key, []):
+			all_items.append(item)
+		cursor = str(page.get("nextCursor", ""))
+		if cursor.is_empty():
+			break
+	var merged := {"ok": true}
+	merged[result_key] = all_items
+	return merged
+
+func _execute_tool_stateless(tool_name: String, params: Dictionary) -> Dictionary:
+	var response = http_jsonrpc_stateless("tools/call", {
+		"name": tool_name,
+		"arguments": params,
+	}, 15000)
+	if response.get("skipped", false):
+		return execute_tool_direct(tool_name, params)
+	if response.has("error"):
+		return {"ok": false, "error": response["error"]}
+	if not response.has("result"):
+		return {"ok": false, "error": {"code": -32000, "message": "tools/call returned no result"}}
+	return _normalize_mcp_tool_call_result(response["result"])
+
+func _normalize_mcp_tool_call_result(result: Variant) -> Dictionary:
+	if typeof(result) != TYPE_DICTIONARY:
+		return {"ok": true, "result": result}
+	var payload: Dictionary = result
+	if payload.get("isError", false):
+		var text := _tool_result_text(payload)
+		return {"ok": false, "error": {"code": -32000, "message": text}}
+	var text := _tool_result_text(payload)
+	if text.is_empty():
+		return {"ok": true, "result": payload}
+	var parsed = JSON.parse_string(text)
+	if typeof(parsed) == TYPE_DICTIONARY:
+		return _normalize_tool_result(parsed)
+	return {"ok": true, "result": payload}
+
+func _tool_result_text(result: Dictionary) -> String:
+	var content = result.get("content", [])
+	if typeof(content) != TYPE_ARRAY:
+		return ""
+	var parts: PackedStringArray = []
+	for block in content:
+		if typeof(block) != TYPE_DICTIONARY:
+			continue
+		var text = str(block.get("text", ""))
+		if not text.is_empty():
+			parts.append(text)
+	return "\n".join(parts)
+
+func _normalize_tool_result(res: Dictionary) -> Dictionary:
+	if res.get("ok", false):
+		if res.has("result"):
+			return {"ok": true, "result": res["result"]}
+		return {"ok": true, "result": res}
+	if res.has("error"):
+		var err = res["error"]
+		if typeof(err) == TYPE_DICTIONARY:
+			return {"ok": false, "error": err}
+		return {"ok": false, "error": {"code": -32000, "message": str(err)}}
+	if res.has("message"):
+		return {"ok": false, "error": {"code": -32000, "message": str(res["message"])}}
+	return {"ok": false, "error": {"code": -32000, "message": str(res)}}
+
 func _process_sse_buffer(target_id: int):
 	var lines = sse_buffer.split("\n", false)
 	for i in range(lines.size()):
@@ -607,5 +709,5 @@ func _process_sse_buffer(target_id: int):
 						if res.has("result"):
 							return {"ok": true, "result": res["result"]}
 						elif res.has("error"):
-							return {"error": true, "message": str(res["error"])}
+							return {"ok": false, "error": res["error"]}
 	return null

@@ -152,3 +152,15 @@ static func ensure_fixture_files() -> void:
 		packed.pack(node)
 		ResourceSaver.save(packed, scene_path)
 		node.free()
+	var test_scene_path := "res://test_scene.tscn"
+	if not FileAccess.file_exists(test_scene_path):
+		var test_scene := PackedScene.new()
+		var root := Node2D.new()
+		root.name = "TestSceneRoot"
+		var child := Node2D.new()
+		child.name = "MyChild"
+		root.add_child(child)
+		test_scene.pack(root)
+		ResourceSaver.save(test_scene, test_scene_path)
+		child.free()
+		root.free()

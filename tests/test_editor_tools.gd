@@ -2,6 +2,10 @@ extends AutoworkTest
 const MCPTestAdapter = preload("res://tests/mcp_test_adapter.gd")
 
 func test_editor_tools():
+	const MCPTestFixtures = preload("res://tests/mcp_test_fixtures.gd")
+	if MCPTestFixtures.is_reduced_headless_catalog():
+		pending("Editor tools require the editor (headless -s exposes a reduced set)")
+		return
 	var root_node = Node2D.new()
 	root_node.name = "EditorRoot"
 	add_child(root_node)

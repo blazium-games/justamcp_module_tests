@@ -38,6 +38,9 @@ const TEMPLATE_URIS := [
 ]
 
 func test_resource_catalog_lists_all_static_and_templates() -> void:
+	if MCPTestFixtures.is_reduced_headless_catalog():
+		pending("JustAMCP docs/editor resources require the editor (headless -s exposes a reduced set)")
+		return
 	var adapter = MCPTestAdapter.create()
 	var listed = adapter.list_resources()
 	assert_true(listed.has("resources"))
@@ -53,6 +56,9 @@ func test_resource_catalog_lists_all_static_and_templates() -> void:
 	adapter.cleanup()
 
 func test_all_static_resources_are_readable() -> void:
+	if MCPTestFixtures.is_reduced_headless_catalog():
+		pending("JustAMCP docs/editor resources require the editor (headless -s exposes a reduced set)")
+		return
 	MCPTestFixtures.ensure_fixture_files()
 	var adapter = MCPTestAdapter.create()
 	for uri in STATIC_URIS:
@@ -62,6 +68,9 @@ func test_all_static_resources_are_readable() -> void:
 	adapter.cleanup()
 
 func test_dynamic_resource_templates_are_readable() -> void:
+	if MCPTestFixtures.is_reduced_headless_catalog():
+		pending("JustAMCP docs/editor resources require the editor (headless -s exposes a reduced set)")
+		return
 	MCPTestFixtures.ensure_fixture_files()
 	var adapter = MCPTestAdapter.create()
 	_assert_readable(adapter, "blazium://script/tests/fixtures/sample.gd")

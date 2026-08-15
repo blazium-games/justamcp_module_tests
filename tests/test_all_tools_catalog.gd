@@ -5,6 +5,9 @@ const MCPTestFixtures = preload("res://tests/mcp_test_fixtures.gd")
 func test_tool_catalog_has_expected_count_and_shape() -> void:
 	MCPTestFixtures.ensure_fixture_files()
 	var schemas = MCPTestFixtures.all_tool_schemas()
+	if schemas.size() < 50:
+		pending("Full JustAMCP tool catalog requires the editor (headless -s exposes a reduced set)")
+		return
 	assert_eq(typeof(schemas), TYPE_ARRAY)
 	assert_gte(schemas.size(), 300, "JustAMCP should expose at least 300 tool schemas")
 
@@ -35,6 +38,9 @@ func test_meta_tools_always_present() -> void:
 		assert_true(names.has(tool_name), "Meta tool should be present: " + tool_name)
 
 func test_optional_task_support_on_long_running_tools() -> void:
+	if MCPTestFixtures.is_reduced_headless_catalog():
+		pending("Full JustAMCP tool catalog requires the editor (headless -s exposes a reduced set)")
+		return
 	var optional_tools := [
 		"blazium_batch_execute",
 		"blazium_editor_reload_project",
@@ -48,6 +54,9 @@ func test_optional_task_support_on_long_running_tools() -> void:
 		assert_eq(str(execution.get("taskSupport", "")), "optional", tool_name + " should allow task-augmented execution")
 
 func test_forbidden_task_support_on_fast_tools() -> void:
+	if MCPTestFixtures.is_reduced_headless_catalog():
+		pending("Full JustAMCP tool catalog requires the editor (headless -s exposes a reduced set)")
+		return
 	var schema := _find_schema("blazium_project_list_settings")
 	assert_false(schema.is_empty(), "project_list_settings should exist")
 	if schema.has("execution"):

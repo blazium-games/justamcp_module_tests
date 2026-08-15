@@ -9,7 +9,7 @@ func test_project_tools():
 		{"tool": "get_project_info", "params": {}},
 		{"tool": "get_filesystem_tree", "params": { "path": "res://", "filter": "*.gd", "max_depth": 1 }},
 		{"tool": "search_files", "params": { "query": "test", "path": "res://", "file_type": "scene", "max_results": 10 }},
-		{"tool": "search_in_files", "params": { "query": "GutTest", "path": "res://", "max_results": 10, "regex": false, "file_type": "script" }},
+		{"tool": "search_in_files", "params": { "query": "AutoworkTest", "path": "res://", "max_results": 10, "regex": false, "file_type": "script" }},
 		{"tool": "get_project_settings", "params": { "section": "application", "key": "config/name" }},
 		{"tool": "set_project_setting", "params": { "key": "application/config/test_mock", "value": "test" }},
 		{"tool": "uid_to_project_path", "params": { "uid": "uid://test" }},

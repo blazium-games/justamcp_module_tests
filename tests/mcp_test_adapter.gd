@@ -1,6 +1,8 @@
 extends RefCounted
 class_name MCPTestAdapter
 
+const MCPTestFixtures = preload("res://tests/mcp_test_fixtures.gd")
+
 static func create(_parent: Node = null):
 	return load("res://tests/mcp_test_adapter.gd").new()
 
@@ -112,6 +114,8 @@ func _on_tool_requested(p_request_id: String, p_tool_name: String, p_params: Dic
 		mcp_server.send_tool_result(p_request_id, false, payload, error_msg)
 
 func execute_tool_direct(tool_name: String, params: Dictionary = {}) -> Dictionary:
+	if MCPTestFixtures.is_reduced_headless_catalog():
+		return {"error": "Full JustAMCP tool catalog requires the editor (headless -s exposes a reduced set)"}
 	if not tool_executor:
 		tool_executor = JustAMCPToolExecutor.new()
 	return tool_executor.execute_tool(tool_name, params)

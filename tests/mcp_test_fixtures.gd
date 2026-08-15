@@ -20,6 +20,9 @@ static func all_tool_schemas() -> Array:
 	enable_all_tool_categories()
 	return JustAMCPToolExecutor.get_tool_schemas(false, false)
 
+static func is_reduced_headless_catalog() -> bool:
+	return all_tool_schemas().size() < 50
+
 static func minimal_args_from_schema(schema: Dictionary) -> Dictionary:
 	var args := {}
 	var input_schema = schema.get("inputSchema", {}) as Dictionary

@@ -1,5 +1,8 @@
 extends SceneTree
 
+# Editor MCP (6506) is required for HTTP Autowork coverage. Autowork --aw-* skips
+# MCP unless --enable-mcp is also passed; this runner constructs the server if needed.
+
 const MCPTestFixtures = preload("res://tests/mcp_test_fixtures.gd")
 
 const MAX_WAIT_FRAMES := 3600

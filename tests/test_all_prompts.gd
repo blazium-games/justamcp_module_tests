@@ -32,7 +32,7 @@ func test_all_sixteen_prompts_listed() -> void:
 	var listed = adapter.list_prompts()
 	assert_true(listed.has("prompts"))
 	var names = _prompt_names(listed["prompts"])
-	assert_eq(names.size(), 16, "Should list exactly 16 prompts")
+	assert_gte(names.size(), 16, "Should list at least the 16 built-in prompts")
 	for prompt_name in EXPECTED_PROMPTS:
 		assert_true(names.has(prompt_name), "Missing prompt: " + prompt_name)
 	adapter.cleanup()

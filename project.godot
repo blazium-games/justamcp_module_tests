@@ -11,6 +11,7 @@ config_version=5
 [application]
 
 config/name="JustAMCP Module Tests"
+run/main_scene="res://test_scene.tscn"
 config/features=PackedStringArray("4.3.2", "Forward Plus")
 config/test_mock="test"
 
@@ -19,11 +20,10 @@ config/test_mock="test"
 justamcp/override_editor_settings=true
 justamcp/server_enabled=true
 justamcp/list_page_size=5
-justamcp/task_max_concurrent=3
 justamcp/mcp_log_buffer_size=20
+justamcp/task_max_concurrent=3
 justamcp/tools/editor_tools=true
 justamcp/tools/networking_tools=true
-justamcp/tools/multiuser_tools=true
 justamcp/tools/spatial_tools=true
 justamcp/tools/runtime_tools=true
 justamcp/tools/resource_tools=true
@@ -48,6 +48,7 @@ justamcp/tools/draw_tools=true
 justamcp/tools/environment_tools=true
 justamcp/tools/analysis_tools=true
 justamcp/tools/autowork_tools=true
+justamcp/tools/multiuser_tools=true
 
 [editor_plugins]
 

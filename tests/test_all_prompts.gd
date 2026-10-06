@@ -19,6 +19,7 @@ const EXPECTED_PROMPTS := [
 	"blazium_multiplayer_architect",
 	"blazium_ui_scaffolder",
 	"blazium_shader_expert",
+	"blazium_visual_proof",
 ]
 
 func _prompt_names(prompts: Array) -> Array:
@@ -32,7 +33,7 @@ func test_all_sixteen_prompts_listed() -> void:
 	var listed = adapter.list_prompts()
 	assert_true(listed.has("prompts"))
 	var names = _prompt_names(listed["prompts"])
-	assert_gte(names.size(), 16, "Should list at least the 16 built-in prompts")
+	assert_gte(names.size(), EXPECTED_PROMPTS.size(), "Should list the built-in prompts")
 	for prompt_name in EXPECTED_PROMPTS:
 		assert_true(names.has(prompt_name), "Missing prompt: " + prompt_name)
 	adapter.cleanup()
@@ -60,12 +61,22 @@ func test_all_prompts_return_messages() -> void:
 		"ui_concept": "Main menu with three buttons",
 		"networking_layer": "Player movement sync",
 		"effect_description": "Pulse glow on sprite",
+		"change": "Move the crate one meter",
+		"camera": "position 0,2,4",
 	}
-	for prompt_name in EXPECTED_PROMPTS:
+	var prompt_names: Array = EXPECTED_PROMPTS.duplicate()
+	var listed = adapter.list_prompts()
+	if _prompt_names(listed.get("prompts", [])).has("blazium_asset_tagging_workflow"):
+		prompt_names.append("blazium_asset_tagging_workflow")
+	for prompt_name in prompt_names:
 		var payload = adapter.get_prompt(prompt_name, args)
 		assert_true(payload.get("ok", false), "Prompt should succeed: " + prompt_name + " error=" + str(payload.get("error", payload)))
 		assert_true(payload.has("messages"), "Prompt should include messages: " + prompt_name)
 		assert_gt(payload["messages"].size(), 0, "Prompt should include content: " + prompt_name)
+		if prompt_name == "blazium_visual_proof":
+			var text := JSON.stringify(payload)
+			assert_true(text.contains("blazium_editor_set_camera"), "Visual proof should name the camera tool")
+			assert_true(text.contains("blazium_runtime_compare_screenshots"), "Visual proof should name the compare tool")
 	adapter.cleanup()
 
 func test_blazium_context_completion() -> void:

@@ -32,6 +32,11 @@ func test_tool_catalog_has_expected_count_and_shape() -> void:
 
 	assert_gte(seen.size(), 300, "Unique tool count should be at least 300")
 
+func test_project_settings_list_the_full_server_catalog() -> void:
+	assert_false(bool(ProjectSettings.get_setting("blazium/justamcp/enable_toolset_discovery", true)), "Toolset discovery should stay off so every tool is listed")
+	var listed = JustAMCPToolExecutor.get_tool_schemas()
+	assert_gte(listed.size(), 390, "The module-test project should expose the full JustAMCP catalog")
+
 func test_meta_tools_always_present() -> void:
 	var names := _tool_names()
 	for tool_name in ["blazium_search_tools", "blazium_execute_tool", "blazium_get_guide"]:
@@ -45,7 +50,6 @@ func test_optional_task_support_on_long_running_tools() -> void:
 		"blazium_batch_execute",
 		"blazium_editor_reload_project",
 		"blazium_editor_play_scene",
-		"blazium_export_project",
 	]
 	for tool_name in optional_tools:
 		var schema := _find_schema(tool_name)

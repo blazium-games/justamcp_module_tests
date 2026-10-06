@@ -6,13 +6,13 @@ func test_disabled_category_filters_tools_list() -> void:
 	var original: Variant = ProjectSettings.get_setting(cat_key)
 
 	ProjectSettings.set_setting(cat_key, false)
-	var disabled_schemas = JustAMCPToolExecutor.get_tool_schemas()
+	var disabled_schemas = JustAMCPToolExecutor.get_tool_schemas(false, false, false)
 	var disabled_names := _names(disabled_schemas)
 	assert_false(disabled_names.has("blazium_create_shader"), "Disabled category should filter shader tools")
 	assert_false(disabled_names.has("blazium_read_shader"), "Disabled category should filter shader tools")
 
 	ProjectSettings.set_setting(cat_key, true)
-	var enabled_schemas = JustAMCPToolExecutor.get_tool_schemas()
+	var enabled_schemas = JustAMCPToolExecutor.get_tool_schemas(false, false, false)
 	var enabled_names := _names(enabled_schemas)
 	assert_true(enabled_names.size() >= disabled_names.size(), "Re-enabling category should restore tools")
 

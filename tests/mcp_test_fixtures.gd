@@ -18,7 +18,9 @@ static func enable_all_tool_categories() -> void:
 
 static func all_tool_schemas() -> Array:
 	enable_all_tool_categories()
-	return JustAMCPToolExecutor.get_tool_schemas(false, false)
+	# The third argument disables the discovery filter. Headless runs turn that
+	# filter on, which otherwise hides every tool except the six discovery entry points.
+	return JustAMCPToolExecutor.get_tool_schemas(false, false, false)
 
 static func is_reduced_headless_catalog() -> bool:
 	return all_tool_schemas().size() < 50

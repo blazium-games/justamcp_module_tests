@@ -22,6 +22,7 @@ justamcp/server_enabled=true
 justamcp/list_page_size=5
 justamcp/mcp_log_buffer_size=20
 justamcp/task_max_concurrent=3
+justamcp/enable_toolset_discovery=false
 justamcp/tools/editor_tools=true
 justamcp/tools/networking_tools=true
 justamcp/tools/spatial_tools=true
@@ -47,7 +48,12 @@ justamcp/tools/blueprint_tools=true
 justamcp/tools/draw_tools=true
 justamcp/tools/environment_tools=true
 justamcp/tools/analysis_tools=true
+justamcp/tools/mcp_client_tools=true
 justamcp/tools/autowork_tools=true
+justamcp/tools/semantic_search_tools=true
+justamcp/tools/remote_control_tools=true
+justamcp/tools/remote_control_tools/blazium_remote_control_exec=true
+justamcp/tools/remote_control_tools/blazium_remote_control_eval=true
 justamcp/tools/multiuser_tools=true
 
 [editor_plugins]

@@ -25,7 +25,7 @@ func test_search_tools_and_guides_cover_new_catalog() -> void:
 func test_execute_tool_delegates_and_blocks_nested_batch() -> void:
 	var adapter = MCPTestAdapter.create()
 
-	var delegated = adapter.execute_tool_direct("blazium_execute_tool", {"tool_name": "get_guide", "arguments": ""})
+	var delegated = adapter.execute_tool_direct("blazium_execute_tool", {"tool_name": "get_guide", "arguments": {}})
 	assert_true(delegated.get("ok", false), "execute_tool should delegate to get_guide with empty args")
 	assert_true(delegated.has("topics"), "Delegated get_guide should return topics")
 

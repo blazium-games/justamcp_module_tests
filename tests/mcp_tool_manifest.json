@@ -222,6 +222,7 @@
   "export_tools": [
     "list_export_presets",
     "export_project",
+    "export_smoke",
     "get_export_info",
     "list_android_devices",
     "get_android_preset_info",

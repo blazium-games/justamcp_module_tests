@@ -20,6 +20,7 @@ const EXPECTED_PROMPTS := [
 	"blazium_ui_scaffolder",
 	"blazium_shader_expert",
 	"blazium_visual_proof",
+	"blazium_version_migration",
 ]
 
 func _prompt_names(prompts: Array) -> Array:
@@ -28,7 +29,7 @@ func _prompt_names(prompts: Array) -> Array:
 		names.append(str(prompt.get("name", "")))
 	return names
 
-func test_all_sixteen_prompts_listed() -> void:
+func test_builtin_prompts_listed() -> void:
 	var adapter = MCPTestAdapter.create()
 	var listed = adapter.list_prompts()
 	assert_true(listed.has("prompts"))
@@ -63,6 +64,8 @@ func test_all_prompts_return_messages() -> void:
 		"effect_description": "Pulse glow on sprite",
 		"change": "Move the crate one meter",
 		"camera": "position 0,2,4",
+		"asset_path": "res://models/crate.glb",
+		"from_version": "4.3",
 	}
 	var prompt_names: Array = EXPECTED_PROMPTS.duplicate()
 	var listed = adapter.list_prompts()
@@ -73,10 +76,19 @@ func test_all_prompts_return_messages() -> void:
 		assert_true(payload.get("ok", false), "Prompt should succeed: " + prompt_name + " error=" + str(payload.get("error", payload)))
 		assert_true(payload.has("messages"), "Prompt should include messages: " + prompt_name)
 		assert_gt(payload["messages"].size(), 0, "Prompt should include content: " + prompt_name)
+		var text := JSON.stringify(payload)
 		if prompt_name == "blazium_visual_proof":
-			var text := JSON.stringify(payload)
 			assert_true(text.contains("blazium_editor_set_camera"), "Visual proof should name the camera tool")
 			assert_true(text.contains("blazium_runtime_compare_screenshots"), "Visual proof should name the compare tool")
+			assert_true(text.contains("res://models/crate.glb"), "Visual proof should name the loaded asset path")
+			assert_true(text.contains("placeholder"), "Visual proof should refuse a placeholder shot")
+		if prompt_name == "blazium_version_migration":
+			assert_true(text.contains("blazium-version-migration"), "Migration should point at the skill")
+			assert_true(text.contains("current pin"), "Migration should keep the project pin")
+			assert_false(text.contains("PoolByteArray and the other"), "Migration should not paste the rename table")
+		if prompt_name == "blazium_gdscript_linter":
+			assert_true(text.contains("yield(...) -> await"), "Linter should name the Godot 3 yield replacement")
+			assert_true(text.contains("CharacterBody2D"), "Linter should name the Godot 3 body replacement")
 	adapter.cleanup()
 
 func test_blazium_context_completion() -> void:

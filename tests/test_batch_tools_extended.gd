@@ -19,7 +19,7 @@ func test_batch_add_nodes_and_execute_key_variants() -> void:
 		],
 	})
 	assert_true(add_result.get("ok", false), "batch_add_nodes should succeed against the test scene root")
-	assert_eq(add_result.get("result", {}).get("count", 0), 2, "batch_add_nodes should create both nodes")
+	assert_eq(int(add_result.get("count", add_result.get("result", {}).get("count", 0))), 2, "batch_add_nodes should create both nodes")
 
 	var execute_result = adapter.execute_tool_direct("blazium_batch_execute", {
 		"steps": [

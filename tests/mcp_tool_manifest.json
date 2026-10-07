@@ -25,8 +25,16 @@
     "logs_read",
     "editor_reload_project",
     "editor_save_all_scenes",
+    "editor_save_all",
+    "editor_get_camera",
+    "editor_set_camera",
+    "editor_list_dialogs",
+    "editor_dismiss_dialog",
+    "editor_list_actions",
+    "editor_invoke_action",
+    "editor_unsaved_state",
     "editor_get_signals",
-    "open_in_godot",
+    "open_in_blazium",
     "rescan_filesystem",
     "scene_tree_dump"
   ],
@@ -45,17 +53,13 @@
     "networking_setup_sync",
     "networking_get_info"
   ],
-  "multiuser_tools": [
-    "multiuser_get_status",
-    "multiuser_send_chat",
-    "multiuser_kick_peer",
-    "multiuser_trigger_autowork"
-  ],
   "spatial_tools": [
     "spatial_analyze_layout",
     "spatial_suggest_placement",
     "spatial_detect_overlaps",
     "spatial_measure_distance",
+    "spatial_snap_to_surface",
+    "spatial_repeat_along",
     "spatial_bake_navigation",
     "navigation_set_layers",
     "navigation_get_info"
@@ -77,7 +81,7 @@
     "run_custom_command",
     "runtime_get_tree",
     "runtime_inspect_node",
-    "runtime_run_gut_tests",
+    "runtime_run_autowork_tests",
     "runtime_get_test_results",
     "wait",
     "get_runtime_status",
@@ -89,7 +93,12 @@
     "runtime_find_ui_elements",
     "runtime_click_button_by_text",
     "runtime_move_node",
-    "runtime_monitor_properties"
+    "runtime_monitor_properties",
+    "runtime_freeze",
+    "runtime_step",
+    "runtime_step_until",
+    "runtime_set_time_scale",
+    "runtime_click_world"
   ],
   "scene_tools": [
     "create_scene",
@@ -216,7 +225,8 @@
     "get_export_info",
     "list_android_devices",
     "get_android_preset_info",
-    "deploy_to_android"
+    "deploy_to_android",
+    "export_patch_pck"
   ],
   "batch_tools": [
     "find_nodes_by_type",
@@ -300,7 +310,9 @@
     "set_material_3d",
     "setup_environment",
     "setup_camera_3d",
-    "add_gridmap"
+    "add_gridmap",
+    "scene3d_render_probe",
+    "scene3d_set_debug_draw"
   ],
   "shader_tools": [
     "create_shader",
@@ -328,7 +340,10 @@
     "tilemap_get_used_cells"
   ],
   "asset_tools": [
-    "asset_generate_2d_asset"
+    "asset_generate_2d_asset",
+    "asset_lib_search",
+    "asset_lib_info",
+    "asset_lib_install"
   ],
   "blueprint_tools": [
     "blueprint_create_particle_preset",
@@ -340,6 +355,36 @@
   ],
   "environment_tools": [
     "environment_create"
+  ],
+  "remote_control_tools": [
+    "debugger_summary",
+    "focus_window",
+    "remote_control_eval",
+    "remote_control_exec",
+    "remote_control_instance",
+    "remote_control_run_headless_script",
+    "remote_control_status"
+  ],
+  "mcp_client_tools": [
+    "mcp_client_add_bridge",
+    "mcp_client_call_remote_tool",
+    "mcp_client_connect",
+    "mcp_client_disconnect",
+    "mcp_client_list_bridges",
+    "mcp_client_list_remote_tools",
+    "mcp_client_read_remote_resource",
+    "mcp_client_remove_bridge",
+    "mcp_client_status",
+    "mcp_client_update_bridge"
+  ],
+  "semantic_search_tools": [
+    "semantic_find_similar",
+    "semantic_index_stats",
+    "semantic_rebuild_index",
+    "semantic_search",
+    "semantic_search_cancel",
+    "semantic_search_enqueue",
+    "semantic_search_poll"
   ],
   "analysis_tools": [
     "find_unused_resources",
@@ -363,5 +408,24 @@
     "autowork_run_tests_in_directory",
     "autowork_run_test_script",
     "autowork_run_test_by_name"
+  ],
+  "asset_tags_tools": [
+    "tags_list",
+    "tags_get_info",
+    "tags_add",
+    "tags_remove",
+    "tags_rename",
+    "tags_update_comment",
+    "tags_find_assets",
+    "tags_set_on_asset",
+    "tags_get_on_asset",
+    "tags_add_to_asset",
+    "tags_remove_from_asset",
+    "tags_batch_set_on_assets",
+    "tags_search_assets",
+    "tags_get_unused",
+    "tags_rescan",
+    "tags_can_undo",
+    "tags_undo_last_change"
   ]
 }

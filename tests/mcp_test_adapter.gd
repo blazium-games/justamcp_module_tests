@@ -169,12 +169,12 @@ func execute_tool(tool_name: String, params: Dictionary) -> Dictionary:
 
 func get_tool_names() -> Array:
 	var names: Array = []
-	for schema in JustAMCPToolExecutor.get_tool_schemas():
+	for schema in MCPTestFixtures.all_tool_schemas():
 		names.append(str(schema.get("name", "")))
 	return names
 
 func find_tool_schema(tool_name: String) -> Dictionary:
-	for schema in JustAMCPToolExecutor.get_tool_schemas():
+	for schema in MCPTestFixtures.all_tool_schemas():
 		if str(schema.get("name", "")) == tool_name:
 			return schema
 	return {}

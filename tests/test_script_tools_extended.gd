@@ -18,7 +18,8 @@ func test_find_symbols_patch_validate_and_search_script_tools() -> void:
 
 	var symbols = adapter.execute_tool_direct("blazium_find_script_symbols", {"path": path})
 	assert_true(symbols.get("ok", false), "find_script_symbols should succeed")
-	assert_true(symbols.get("result", {}).get("count", 0) >= 4, "find_script_symbols should detect symbols in the temp script")
+	var symbol_count := int(symbols.get("count", symbols.get("result", {}).get("count", 0)))
+	assert_true(symbol_count >= 4, "find_script_symbols should detect symbols in the temp script")
 
 	var patch = adapter.execute_tool_direct("blazium_patch_script", {
 		"path": path,

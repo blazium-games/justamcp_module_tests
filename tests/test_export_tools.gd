@@ -13,6 +13,10 @@ func test_export_tools():
 	]
 	
 	offset_check(tests, executor)
+	var export_result = executor.execute_tool("export_project", { "preset_index": 99, "preset_name": "Dummy", "debug": true })
+	var export_text := JSON.stringify(export_result)
+	assert_false(export_text.findn("not supported") >= 0, export_text)
+	assert_true(export_text.findn("async") >= 0 or export_text.findn("exit_code") >= 0 or export_text.findn("export_presets") >= 0 or export_text.findn("preset") >= 0, export_text)
 
 func offset_check(tests, executor):
 	for t in tests:

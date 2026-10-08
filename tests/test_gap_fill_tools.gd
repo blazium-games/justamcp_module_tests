@@ -22,6 +22,7 @@ const GAP_TOOLS := [
 	"blazium_spatial_snap_to_surface",
 	"blazium_spatial_repeat_along",
 	"blazium_export_patch_pck",
+	"blazium_export_smoke",
 	"blazium_asset_lib_search",
 	"blazium_asset_lib_info",
 	"blazium_asset_lib_install",
@@ -117,6 +118,91 @@ func test_repeat_count_and_dialog_title_are_refused() -> void:
 	_assert_refused(adapter.execute_tool_direct("blazium_spatial_repeat_along", {"node_path": ".", "count": 0}), "count")
 	_assert_refused(adapter.execute_tool_direct("blazium_spatial_repeat_along", {"node_path": ".", "count": 100}), "count")
 	_assert_refused(adapter.execute_tool_direct("blazium_editor_dismiss_dialog", {"title": ""}), "title")
+	adapter.cleanup()
+
+func test_godot3_script_write_names_the_replacement() -> void:
+	if not _full_catalog():
+		return
+	var path := "res://tests/_gap_godot3.gd"
+	_delete_script(path)
+	var adapter = MCPTestAdapter.create()
+	var refused = adapter.execute_tool_direct("blazium_create_script", {"path": path, "content": "extends KinematicBody2D\nfunc _ready() -> void:\n\tpass\n"})
+	_assert_refused(refused, "CharacterBody2D")
+	assert_false(FileAccess.file_exists(path), "A Godot 3 script should not be written")
+	var forced = adapter.execute_tool_direct("blazium_create_script", {"path": path, "content": "extends Node\nfunc _ready() -> void:\n\tyield(get_tree(), \"idle_frame\")\n", "validate": false})
+	assert_true(bool(forced.get("ok", false)), JSON.stringify(forced))
+	assert_true(FileAccess.file_exists(path))
+	_delete_script(path)
+	adapter.cleanup()
+
+func test_script_write_reports_class_index() -> void:
+	if not _full_catalog():
+		return
+	var path := "res://tests/_gap_class_index.gd"
+	_delete_script(path)
+	var adapter = MCPTestAdapter.create()
+	var created = adapter.execute_tool_direct("blazium_create_script", {"path": path, "content": "extends Node\nclass_name JustAMCPGapClassZZZ\nfunc _ready() -> void:\n\tpass\n"})
+	assert_true(bool(created.get("ok", false)), JSON.stringify(created))
+	var created_index := str(created.get("class_index", ""))
+	assert_true(created_index == "pending" or created_index == "registered", JSON.stringify(created))
+	var removed = adapter.execute_tool_direct("blazium_delete_script", {"path": path})
+	assert_true(bool(removed.get("ok", false)), JSON.stringify(removed))
+	var index := str(removed.get("class_index", ""))
+	assert_true(index == "pending" or index == "registered", JSON.stringify(removed))
+	_delete_script(path)
+	adapter.cleanup()
+
+func test_csharp_script_is_written_as_given() -> void:
+	if not _full_catalog():
+		return
+	var path := "res://tests/_gap_plain.cs"
+	_delete_script(path)
+	var adapter = MCPTestAdapter.create()
+	var created = adapter.execute_tool_direct("blazium_create_script", {"path": path, "content": "public class Gap { }\n"})
+	assert_true(bool(created.get("ok", false)), JSON.stringify(created))
+	assert_false(created.has("class_index"), JSON.stringify(created))
+	_delete_script(path)
+	adapter.cleanup()
+
+func test_raw_scene_text_refuses_invented_structure() -> void:
+	if not _full_catalog():
+		return
+	var path := "res://tests/_gap_scene.tscn"
+	_delete_script(path)
+	var adapter = MCPTestAdapter.create()
+	var invented = adapter.execute_tool_direct("blazium_create_file", {"file_path": path, "content": "[gd_scene load_steps=1 format=3 uid=\"uid://abc\"]\n"})
+	_assert_refused(invented, "uid://")
+	assert_false(FileAccess.file_exists(path))
+	var plain := "[gd_scene format=3]\n\n[node name=\"Root\" type=\"Node2D\"]\nposition = Vector2(0, 0)\n"
+	var created = adapter.execute_tool_direct("blazium_create_file", {"file_path": path, "content": plain})
+	assert_true(bool(created.get("ok", false)), JSON.stringify(created))
+	var moved = adapter.execute_tool_direct("blazium_edit_file", {"file_path": path, "search_text": "Vector2(0, 0)", "replace_text": "Vector2(1, 0)"})
+	assert_true(bool(moved.get("ok", false)), JSON.stringify(moved))
+	var connected = adapter.execute_tool_direct("blazium_edit_file", {"file_path": path, "search_text": "Vector2(1, 0)", "replace_text": "Vector2(1, 0)\n\n[connection signal=\"pressed\" from=\".\" to=\".\" method=\"_on_pressed\"]"})
+	assert_true(bool(connected.get("ok", false)), JSON.stringify(connected))
+	var uid_edit = adapter.execute_tool_direct("blazium_edit_file", {"file_path": path, "search_text": "format=3", "replace_text": "format=3 uid=\"uid://abc\""})
+	_assert_refused(uid_edit, "uid://")
+	_delete_script(path)
+	adapter.cleanup()
+
+func test_export_smoke_schema_and_main_thread_scheduling() -> void:
+	if not _full_catalog():
+		return
+	var adapter = MCPTestAdapter.create()
+	var schema = adapter.find_tool_schema("blazium_export_smoke")
+	var input_schema: Dictionary = schema.get("inputSchema", {})
+	assert_true((input_schema.get("required", []) as Array).has("path"))
+	assert_true((input_schema.get("properties", {}) as Dictionary).has("timeout_ms"))
+	var execution: Dictionary = schema.get("execution", {})
+	assert_eq(str(execution.get("taskSupport", "")), "required")
+	var smoke = adapter.execute_tool_direct("blazium_export_smoke", {"path": "res://tests/_gap_missing.exe", "timeout_ms": 10})
+	var smoke_text := JSON.stringify(smoke)
+	assert_false(bool(smoke.get("ok", true)), smoke_text)
+	assert_true(smoke_text.findn("async") >= 0 or smoke_text.findn("not found") >= 0, smoke_text)
+	var export_result = adapter.execute_tool_direct("blazium_export_project", {"preset_name": "Dummy", "debug": true})
+	var export_text := JSON.stringify(export_result)
+	assert_false(export_text.findn("not supported") >= 0, export_text)
+	assert_true(export_text.findn("async") >= 0 or export_text.findn("exit_code") >= 0 or export_text.findn("preset") >= 0 or export_text.findn("export_presets") >= 0, export_text)
 	adapter.cleanup()
 
 func test_dialog_and_play_clock_resources_are_json_objects() -> void:

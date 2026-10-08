@@ -26,6 +26,11 @@ var registered_results = {}
 var streamable_session_id := ""
 var streamable_get_client : HTTPClient
 var streamable_get_buffer := ""
+var _editor_elevated := false
+
+func _append_bearer(headers: Array) -> Array:
+	headers.append("Authorization: Bearer " + str(JustAMCPToolExecutor.instance_bearer()))
+	return headers
 
 func setup_sync():
 	tool_executor = JustAMCPToolExecutor.new()
@@ -61,7 +66,7 @@ func setup_sync():
 	if sse_client.get_status() != HTTPClient.STATUS_CONNECTED:
 		return
 
-	err = sse_client.request(HTTPClient.METHOD_GET, "/sse", ["Accept: text/event-stream"])
+	err = sse_client.request(HTTPClient.METHOD_GET, "/sse", _append_bearer(["Accept: text/event-stream"]))
 	if err != OK:
 		print("Failed to request SSE Stream")
 		return
@@ -100,8 +105,9 @@ func cleanup() -> void:
 	use_stateless_http = false
 
 func set_test_scene_root(root_node: Node) -> void:
-	if tool_executor:
-		tool_executor.set_test_scene_root(root_node)
+	if not tool_executor:
+		tool_executor = JustAMCPToolExecutor.new()
+	tool_executor.set_test_scene_root(root_node)
 
 func _on_tool_requested(p_request_id: String, p_tool_name: String, p_params: Dictionary) -> void:
 	var result = tool_executor.execute_tool(p_tool_name, p_params)
@@ -118,6 +124,9 @@ func execute_tool_direct(tool_name: String, params: Dictionary = {}) -> Dictiona
 		return {"error": "Full JustAMCP tool catalog requires the editor (headless -s exposes a reduced set)"}
 	if not tool_executor:
 		tool_executor = JustAMCPToolExecutor.new()
+	if not _editor_elevated:
+		_editor_elevated = true
+		tool_executor.execute_tool("blazium_session_set_access", {"session_id": "editor", "mode": "write"})
 	return tool_executor.execute_tool(tool_name, params)
 
 func execute_tool(tool_name: String, params: Dictionary) -> Dictionary:
@@ -147,7 +156,7 @@ func execute_tool(tool_name: String, params: Dictionary) -> Dictionary:
 		r_client.close()
 		return execute_tool_direct(tool_name, params)
 
-	r_client.request(HTTPClient.METHOD_POST, "/mcp", ["Content-Type: application/json"], JSON.stringify(payload))
+	r_client.request(HTTPClient.METHOD_POST, "/mcp", _append_bearer(["Content-Type: application/json"]), JSON.stringify(payload))
 
 	while r_client.get_status() == HTTPClient.STATUS_REQUESTING:
 		r_client.poll()
@@ -244,7 +253,7 @@ func http_jsonrpc_stateless(method: String, params: Dictionary = {}, timeout_mse
 		"method": method,
 		"params": params,
 	}
-	var headers := ["Content-Type: application/json"]
+	var headers := _append_bearer(["Content-Type: application/json"])
 	err = client.request(HTTPClient.METHOD_POST, "/mcp", headers, JSON.stringify(payload))
 	if err != OK:
 		client.close()
@@ -299,11 +308,11 @@ func streamable_initialize(timeout_msec: int = 3000) -> Dictionary:
 			"clientInfo": {"name": "justamcp_module_tests", "version": "1.0"},
 		},
 	}
-	var headers := [
+	var headers := _append_bearer([
 		"Content-Type: application/json",
 		"Accept: " + STREAMABLE_ACCEPT,
 		"MCP-Protocol-Version: " + PROTOCOL_VERSION,
-	]
+	])
 	err = client.request(HTTPClient.METHOD_POST, "/mcp", headers, JSON.stringify(payload))
 	if err != OK:
 		client.close()
@@ -364,11 +373,11 @@ func streamable_jsonrpc(method: String, params: Dictionary = {}, timeout_msec: i
 		"method": method,
 		"params": params,
 	}
-	var headers := [
+	var headers := _append_bearer([
 		"Content-Type: application/json",
 		"MCP-Session-Id: " + streamable_session_id,
 		"MCP-Protocol-Version: " + PROTOCOL_VERSION,
-	]
+	])
 	if use_sse_response:
 		headers.append("Accept: " + STREAMABLE_ACCEPT)
 	else:
@@ -442,11 +451,11 @@ func streamable_open_get_stream(last_event_id: String = "", timeout_msec: int = 
 		streamable_get_client = null
 		return {"skipped": true, "error": "GET stream not connected."}
 
-	var headers := [
+	var headers := _append_bearer([
 		"Accept: text/event-stream",
 		"MCP-Session-Id: " + streamable_session_id,
 		"MCP-Protocol-Version: " + PROTOCOL_VERSION,
-	]
+	])
 	if not last_event_id.is_empty():
 		headers.append("Last-Event-ID: " + last_event_id)
 
@@ -500,10 +509,10 @@ func streamable_delete_session(timeout_msec: int = 2000) -> Dictionary:
 		client.close()
 		return {"skipped": true, "error": "DELETE not connected."}
 
-	var headers := [
+	var headers := _append_bearer([
 		"MCP-Session-Id: " + streamable_session_id,
 		"MCP-Protocol-Version: " + PROTOCOL_VERSION,
-	]
+	])
 	err = client.request(HTTPClient.METHOD_DELETE, "/mcp", headers)
 	if err != OK:
 		client.close()

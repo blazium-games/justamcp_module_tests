@@ -59,6 +59,24 @@ func test_batch_property_undo_and_stale_before() -> void:
 	adapter.set_test_scene_root(null)
 	adapter.cleanup()
 
+func test_shader_edit_undo_restores_the_file() -> void:
+	if not _full_catalog():
+		return
+	var path := "res://tests/_agent_undo.gdshader"
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	file.store_string("shader_type canvas_item;\n")
+	file.close()
+	var adapter = MCPTestAdapter.create()
+	adapter.execute_tool_direct("blazium_agent_probe_reset", {})
+	var edited = adapter.execute_tool_direct("blazium_edit_shader", {"path": path, "content": "shader_type spatial;\n"})
+	assert_true(edited.get("ok", false), JSON.stringify(edited))
+	assert_true(FileAccess.get_file_as_string(path).find("spatial") >= 0)
+	var undo = adapter.execute_tool_direct("blazium_editor_undo", {})
+	assert_true(undo.get("ok", false), JSON.stringify(undo))
+	assert_true(FileAccess.get_file_as_string(path).find("canvas_item") >= 0, FileAccess.get_file_as_string(path))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	adapter.cleanup()
+
 func test_checkpoint_diffs_and_restores_a_script_snapshot() -> void:
 	if not _full_catalog():
 		return

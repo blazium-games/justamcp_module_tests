@@ -83,6 +83,21 @@ func test_grounding_map_and_relations() -> void:
 	assert_true(mesh_text.find("scale") >= 0, mesh_text)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(mesh_path))
 
+	var skel_root := Node3D.new()
+	var skeleton := Skeleton3D.new()
+	skeleton.name = "Rig"
+	skel_root.add_child(skeleton)
+	skeleton.owner = skel_root
+	var packed := PackedScene.new()
+	assert_eq(packed.pack(skel_root), OK)
+	var skel_path := "res://tests/_agent_skel.tscn"
+	assert_eq(ResourceSaver.save(packed, skel_path), OK)
+	skel_root.free()
+	var skel_check = adapter.execute_tool_direct("blazium_validate_import", {"path": skel_path})
+	var skel_text := JSON.stringify(skel_check)
+	assert_true(skel_text.find("skeleton has no bones") >= 0, skel_text)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(skel_path))
+
 	adapter.set_test_scene_root(null)
 	adapter.cleanup()
 

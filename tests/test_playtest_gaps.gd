@@ -26,6 +26,8 @@ func test_simulation_verify_ready_feel_and_ui() -> void:
 	assert_eq(int(summary.get("seed", 0)), 7, JSON.stringify(simulation))
 	var ready = adapter.execute_tool_direct("blazium_wait_until_ready", {})
 	assert_true(bool(ready.get("ready", false)), JSON.stringify(ready))
+	assert_true(int(ready.get("waited_ms", -1)) >= 0, JSON.stringify(ready))
+	assert_true(int(ready.get("waited_ms", 99999)) <= 2000, JSON.stringify(ready))
 	var passed = adapter.execute_tool_direct("blazium_verify_change", {"expected": "ok", "actual": "ok"})
 	var failed = adapter.execute_tool_direct("blazium_verify_change", {"expected": "ok", "actual": "no"})
 	assert_true(bool(passed.get("passed", false)), JSON.stringify(passed))

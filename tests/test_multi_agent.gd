@@ -101,6 +101,38 @@ func test_claim_prefix_and_foreign_session_are_rejected() -> void:
 	adapter.execute_tool_direct("blazium_session_close", {"session_id": id_b})
 	adapter.cleanup()
 
+func test_policy_caps_usage_bytes_and_catalog_length() -> void:
+	if not _full_catalog():
+		return
+	var adapter = MCPTestAdapter.create()
+	for i in 40:
+		var checkpoint = adapter.execute_tool_direct("blazium_checkpoint", {})
+		assert_true(checkpoint.get("ok", false), JSON.stringify(checkpoint))
+	var listed = adapter.execute_tool_direct("blazium_list_checkpoints", {})
+	assert_true((listed.get("checkpoints", []) as Array).size() <= 32, JSON.stringify(listed))
+	adapter.execute_tool_direct("blazium_agent_probe_reset", {})
+	for i in 130:
+		adapter.execute_tool_direct("blazium_agent_probe_increment", {"idempotency_key": "cap-%d" % i})
+	var oldest = adapter.execute_tool_direct("blazium_agent_probe_increment", {"idempotency_key": "cap-0"})
+	assert_false(bool(oldest.get("idempotent_replay", false)), JSON.stringify(oldest))
+	var newest = adapter.execute_tool_direct("blazium_agent_probe_increment", {"idempotency_key": "cap-129"})
+	assert_true(bool(newest.get("idempotent_replay", false)), JSON.stringify(newest))
+	var before_undo := int(adapter.execute_tool_direct("blazium_agent_probe_value", {}).get("value", -1))
+	for i in 80:
+		adapter.execute_tool_direct("blazium_editor_undo", {})
+	var after_undo := int(adapter.execute_tool_direct("blazium_agent_probe_value", {}).get("value", -1))
+	assert_eq(before_undo - after_undo, 64, "probe before %d after %d" % [before_undo, after_undo])
+	var audit = adapter.execute_tool_direct("blazium_export_audit_log", {})
+	assert_true((audit.get("entries", []) as Array).size() <= 256, JSON.stringify(audit))
+	var usage = adapter.read_resource("blazium://session/usage")
+	var usage_text := str((usage.get("contents", []) as Array)[0].get("text", ""))
+	assert_true(usage_text.find("\"bytes\"") >= 0, usage_text)
+	var catalog = adapter.read_resource("blazium://meta/tools_list_bytes")
+	var catalog_text := str((catalog.get("contents", []) as Array)[0].get("text", ""))
+	assert_true(catalog_text.find("\"bytes\"") >= 0, catalog_text)
+	assert_false(catalog_text.find("bytes_estimate") >= 0, catalog_text)
+	adapter.cleanup()
+
 func _full_catalog() -> bool:
 	if MCPTestFixtures.is_reduced_headless_catalog():
 		pending("Full JustAMCP tool catalog requires the editor (headless -s exposes a reduced set)")

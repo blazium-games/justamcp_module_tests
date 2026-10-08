@@ -443,7 +443,8 @@
     "agent_probe_increment",
     "agent_probe_reset",
     "agent_probe_value",
-    "export_audit_log"
+    "export_audit_log",
+    "playtest_handoff"
   ],
   "autowork_tools": [
     "autowork_run_all_tests",

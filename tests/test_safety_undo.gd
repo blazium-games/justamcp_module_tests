@@ -77,6 +77,24 @@ func test_shader_edit_undo_restores_the_file() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	adapter.cleanup()
 
+func test_shader_template_undo_restores_the_file() -> void:
+	if not _full_catalog():
+		return
+	var path := "res://tests/_agent_template.gdshader"
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	file.store_string("shader_type canvas_item;\n")
+	file.close()
+	var adapter = MCPTestAdapter.create()
+	adapter.execute_tool_direct("blazium_agent_probe_reset", {})
+	var created = adapter.execute_tool_direct("blazium_create_shader_template", {"shaderPath": path, "shaderType": "spatial", "code": "shader_type spatial;\n"})
+	assert_true(created.get("ok", false), JSON.stringify(created))
+	assert_true(FileAccess.get_file_as_string(path).find("spatial") >= 0)
+	var undo = adapter.execute_tool_direct("blazium_editor_undo", {})
+	assert_true(undo.get("ok", false), JSON.stringify(undo))
+	assert_true(FileAccess.get_file_as_string(path).find("canvas_item") >= 0, FileAccess.get_file_as_string(path))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	adapter.cleanup()
+
 func test_patch_script_undo_restores_the_file() -> void:
 	if not _full_catalog():
 		return

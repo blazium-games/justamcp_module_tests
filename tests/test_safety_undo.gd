@@ -191,6 +191,99 @@ func test_dry_run_does_not_apply_and_revert_reports_mismatch() -> void:
 	assert_true(bool(reverted.get("mismatch", false)), JSON.stringify(reverted))
 	adapter.cleanup()
 
+func test_move_copy_and_binary_undo_restore_files() -> void:
+	if not _full_catalog():
+		return
+	var adapter = MCPTestAdapter.create()
+	var moved := "res://tests/_agent_move.txt"
+	var moved_dest := "res://tests/_agent_move_dst.txt"
+	var copied := "res://tests/_agent_copy.txt"
+	var copied_dest := "res://tests/_agent_copy_dst.txt"
+	var scene_src := "res://tests/_agent_dup.tscn"
+	var scene_dest := "res://tests/_agent_dup_copy.tscn"
+	var binary := "res://tests/_agent_bin.png"
+	var binary_dest := "res://tests/_agent_bin_dst.png"
+	_write_text(moved, "moved-body")
+	adapter.execute_tool_direct("blazium_agent_probe_reset", {})
+	var move_result = adapter.execute_tool_direct("blazium_move_file", {"from": moved, "to": moved_dest})
+	assert_true(move_result.get("ok", false), JSON.stringify(move_result))
+	assert_false(FileAccess.file_exists(moved))
+	assert_true(FileAccess.file_exists(moved_dest))
+	var move_undo = adapter.execute_tool_direct("blazium_editor_undo", {})
+	assert_true(move_undo.get("ok", false), JSON.stringify(move_undo))
+	assert_eq(FileAccess.get_file_as_string(moved), "moved-body")
+	assert_false(FileAccess.file_exists(moved_dest))
+	_write_text(copied, "copy-body")
+	adapter.execute_tool_direct("blazium_agent_probe_reset", {})
+	var copy_result = adapter.execute_tool_direct("blazium_copy_file", {"from": copied, "to": copied_dest})
+	assert_true(copy_result.get("ok", false), JSON.stringify(copy_result))
+	assert_true(FileAccess.file_exists(copied_dest))
+	var copy_undo = adapter.execute_tool_direct("blazium_editor_undo", {})
+	assert_true(copy_undo.get("ok", false), JSON.stringify(copy_undo))
+	assert_eq(FileAccess.get_file_as_string(copied), "copy-body")
+	assert_false(FileAccess.file_exists(copied_dest))
+	_write_text(scene_src, "[gd_scene format=3]\n\n[node name=\"Root\" type=\"Node\"]\n")
+	adapter.execute_tool_direct("blazium_agent_probe_reset", {})
+	var duplicated = adapter.execute_tool_direct("blazium_scene_duplicate_file", {"source_path": scene_src, "dest_path": scene_dest})
+	assert_true(duplicated.get("ok", false), JSON.stringify(duplicated))
+	assert_true(FileAccess.file_exists(scene_dest))
+	var duplicate_undo = adapter.execute_tool_direct("blazium_editor_undo", {})
+	assert_true(duplicate_undo.get("ok", false), JSON.stringify(duplicate_undo))
+	assert_true(FileAccess.file_exists(scene_src))
+	assert_false(FileAccess.file_exists(scene_dest))
+	var binary_file := FileAccess.open(binary, FileAccess.WRITE)
+	var binary_bytes := PackedByteArray([0xff, 0xfe, 0x00, 0x81])
+	binary_file.store_buffer(binary_bytes)
+	binary_file.close()
+	adapter.execute_tool_direct("blazium_agent_probe_reset", {})
+	var binary_move = adapter.execute_tool_direct("blazium_move_file", {"from": binary, "to": binary_dest})
+	assert_true(binary_move.get("ok", false), JSON.stringify(binary_move))
+	var binary_undo = adapter.execute_tool_direct("blazium_editor_undo", {})
+	assert_true(binary_undo.get("ok", false), JSON.stringify(binary_undo))
+	assert_eq(FileAccess.get_file_as_bytes(binary), binary_bytes)
+	assert_false(FileAccess.file_exists(binary_dest))
+	for path in [moved, moved_dest, copied, copied_dest, scene_src, scene_dest, binary, binary_dest]:
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	adapter.cleanup()
+
+func test_recipe_apply_undo_removes_the_player() -> void:
+	if not _full_catalog():
+		return
+	var root := Node2D.new()
+	root.name = "RecipeRoot"
+	add_child(root)
+	autoqfree(root)
+	var adapter = MCPTestAdapter.create()
+	adapter.set_test_scene_root(root)
+	adapter.execute_tool_direct("blazium_agent_probe_reset", {})
+	var applied = adapter.execute_tool_direct("blazium_recipe_add_player_controller", {"apply": true})
+	assert_true(applied.get("ok", false), JSON.stringify(applied))
+	var player := root.get_node_or_null("Player")
+	assert_not_null(player)
+	assert_not_null(player.get_node_or_null("CollisionShape2D"))
+	assert_not_null(player.get_node_or_null("Camera2D"))
+	var undo = adapter.execute_tool_direct("blazium_editor_undo", {})
+	assert_true(undo.get("ok", false), JSON.stringify(undo))
+	assert_null(root.get_node_or_null("Player"))
+	adapter.set_test_scene_root(null)
+	adapter.cleanup()
+
+func test_verify_game_change_does_not_pass_without_play() -> void:
+	if not _full_catalog():
+		return
+	var adapter = MCPTestAdapter.create()
+	var checked = adapter.execute_tool_direct("blazium_verify_game_change", {"scene_path": "res://tests/_missing_play.tscn", "duration_ms": 50})
+	assert_false(bool(checked.get("ok", true)), JSON.stringify(checked))
+	assert_false(bool(checked.get("played", true)), JSON.stringify(checked))
+	assert_false(bool(checked.get("passed", true)), JSON.stringify(checked))
+	adapter.cleanup()
+
+func _write_text(path: String, text: String) -> void:
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	file.store_string(text)
+	file.close()
+
 func _full_catalog() -> bool:
 	if MCPTestFixtures.is_reduced_headless_catalog():
 		pending("Full JustAMCP tool catalog requires the editor (headless -s exposes a reduced set)")

@@ -95,6 +95,46 @@ func test_patch_script_undo_restores_the_file() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	adapter.cleanup()
 
+func test_edit_file_undo_restores_the_file() -> void:
+	if not _full_catalog():
+		return
+	var path := "res://tests/_agent_edit.txt"
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	file.store_string("alpha beta")
+	file.close()
+	var adapter = MCPTestAdapter.create()
+	adapter.execute_tool_direct("blazium_agent_probe_reset", {})
+	var edited = adapter.execute_tool_direct("blazium_edit_file", {"file_path": path, "search_text": "beta", "replace_text": "gamma"})
+	assert_true(edited.get("ok", false), JSON.stringify(edited))
+	assert_true(FileAccess.get_file_as_string(path).find("gamma") >= 0)
+	var undo = adapter.execute_tool_direct("blazium_editor_undo", {})
+	assert_true(undo.get("ok", false), JSON.stringify(undo))
+	assert_true(FileAccess.get_file_as_string(path).find("beta") >= 0, FileAccess.get_file_as_string(path))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	adapter.cleanup()
+
+func test_edit_file_change_plan_applies_and_reverts() -> void:
+	if not _full_catalog():
+		return
+	var path := "res://tests/_agent_plan.txt"
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	file.store_string("alpha beta")
+	file.close()
+	var adapter = MCPTestAdapter.create()
+	adapter.execute_tool_direct("blazium_agent_probe_reset", {})
+	var dry = adapter.execute_tool_direct("blazium_edit_file", {"file_path": path, "search_text": "beta", "replace_text": "gamma", "dry_run": true})
+	assert_true(bool(dry.get("dry_run", false)), JSON.stringify(dry))
+	assert_true(FileAccess.get_file_as_string(path).find("beta") >= 0)
+	var applied = adapter.execute_tool_direct("blazium_apply_change_plan", {"plan_id": str(dry.get("plan_id", ""))})
+	assert_true(applied.get("ok", false), JSON.stringify(applied))
+	assert_true(FileAccess.get_file_as_string(path).find("gamma") >= 0, FileAccess.get_file_as_string(path))
+	var reverted = adapter.execute_tool_direct("blazium_revert_change_plan", {"plan_id": str(dry.get("plan_id", ""))})
+	assert_true(reverted.get("ok", false), JSON.stringify(reverted))
+	assert_false(bool(reverted.get("mismatch", true)))
+	assert_true(FileAccess.get_file_as_string(path).find("beta") >= 0, FileAccess.get_file_as_string(path))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	adapter.cleanup()
+
 func test_checkpoint_diffs_and_restores_a_script_snapshot() -> void:
 	if not _full_catalog():
 		return

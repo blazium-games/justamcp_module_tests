@@ -26,6 +26,7 @@ const GAP_TOOLS := [
 	"blazium_asset_lib_search",
 	"blazium_asset_lib_info",
 	"blazium_asset_lib_install",
+	"blazium_extract_zip",
 ]
 
 const OPTIONAL_TOOLS := [
@@ -161,7 +162,46 @@ func test_csharp_script_is_written_as_given() -> void:
 	var created = adapter.execute_tool_direct("blazium_create_script", {"path": path, "content": "public class Gap { }\n"})
 	assert_true(bool(created.get("ok", false)), JSON.stringify(created))
 	assert_false(created.has("class_index"), JSON.stringify(created))
+	var validated = adapter.execute_tool_direct("blazium_validate_script", {"path": path})
+	var compiler := str(validated.get("compiler", ""))
+	assert_true(compiler == "unavailable" or compiler == "csharp", JSON.stringify(validated))
+	if compiler == "unavailable":
+		assert_false(bool(validated.get("valid", true)), JSON.stringify(validated))
+		assert_true(str(validated.get("message", "")).find("not in this build") >= 0, JSON.stringify(validated))
 	_delete_script(path)
+	adapter.cleanup()
+
+func test_invented_screenshot_demo_frame_and_zip_extract() -> void:
+	if not _full_catalog():
+		return
+	var adapter = MCPTestAdapter.create()
+	var shot = adapter.execute_tool_direct("blazium_editor_take_screenshot", {"path": "res://tests/_gap_shot.png", "crop_to_node": "."})
+	assert_true(bool(shot.get("ok", false)), JSON.stringify(shot))
+	if bool(shot.get("invented", false)):
+		assert_false(shot.has("cropped_to"), JSON.stringify(shot))
+		assert_true(str(shot.get("message", "")).find("No viewport image") >= 0, JSON.stringify(shot))
+	assert_true(FileAccess.file_exists("res://tests/_gap_shot.png"))
+	var started = adapter.execute_tool_direct("blazium_runtime_record_video", {"action": "start"})
+	assert_true(bool(started.get("ok", false)), JSON.stringify(started))
+	var stopped = adapter.execute_tool_direct("blazium_runtime_record_video", {"action": "stop"})
+	assert_true(bool(stopped.get("ok", false)), JSON.stringify(stopped))
+	if int(stopped.get("frames_captured", 0)) == 1:
+		assert_true(bool(stopped.get("invented", false)), JSON.stringify(stopped))
+		assert_true(FileAccess.file_exists("res://.video_recordings/invented.png"))
+	var zip_path := "res://tests/_gap_pack.zip"
+	var dest := "res://tests/_gap_unzip"
+	var packer := ZIPPacker.new()
+	assert_eq(packer.open(ProjectSettings.globalize_path(zip_path)), OK)
+	packer.start_file("hello.txt")
+	packer.write_file("zip-body".to_utf8_buffer())
+	packer.close_file()
+	packer.close()
+	var extracted = adapter.execute_tool_direct("blazium_extract_zip", {"zip_path": zip_path, "destination": dest})
+	assert_true(bool(extracted.get("ok", false)), JSON.stringify(extracted))
+	assert_eq(FileAccess.get_file_as_string(dest + "/hello.txt"), "zip-body")
+	for path in ["res://tests/_gap_shot.png", zip_path, dest + "/hello.txt", "res://.video_recordings/invented.png"]:
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	adapter.cleanup()
 
 func test_raw_scene_text_refuses_invented_structure() -> void:

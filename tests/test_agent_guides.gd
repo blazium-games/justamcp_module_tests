@@ -15,6 +15,7 @@ func test_guides_clients_conventions_and_editorhelp_instructions() -> void:
 		"blazium://reference/tools",
 		"blazium://mcp/clients",
 		"blazium://mcp/compatibility",
+		"blazium://mcp/benchmark_tasks",
 		"blazium://project/conventions",
 	]:
 		var result = adapter.read_resource(uri)
@@ -27,7 +28,12 @@ func test_guides_clients_conventions_and_editorhelp_instructions() -> void:
 	var compatibility = adapter.read_resource("blazium://mcp/compatibility")
 	var compatibility_text := str((compatibility.get("contents", []) as Array)[0].get("text", ""))
 	assert_true(compatibility_text.find("protocol_version") >= 0, compatibility_text)
+	assert_true(compatibility_text.find("engine_version") >= 0, compatibility_text)
 	assert_true(compatibility_text.find("no extra license") >= 0, compatibility_text)
+	var tasks = adapter.read_resource("blazium://mcp/benchmark_tasks")
+	var tasks_text := str((tasks.get("contents", []) as Array)[0].get("text", ""))
+	assert_true(tasks_text.find("validate_script") >= 0, tasks_text)
+	assert_true(tasks_text.find("editor_take_screenshot") >= 0, tasks_text)
 	var docs = adapter.read_resource("blazium://guide/engine-docs")
 	var docs_text := str((docs.get("contents", []) as Array)[0].get("text", ""))
 	assert_true(docs_text.find("EditorHelp") >= 0, docs_text)

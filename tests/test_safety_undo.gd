@@ -269,6 +269,37 @@ func test_recipe_apply_undo_removes_the_player() -> void:
 	adapter.set_test_scene_root(null)
 	adapter.cleanup()
 
+func test_theme_and_import_copy_undo_restore_files() -> void:
+	if not _full_catalog():
+		return
+	var adapter = MCPTestAdapter.create()
+	var theme := "res://tests/_agent_theme.tres"
+	var original := "[gd_resource type=\"Resource\" format=3]\n"
+	_write_text(theme, original)
+	adapter.execute_tool_direct("blazium_agent_probe_reset", {})
+	var created = adapter.execute_tool_direct("blazium_create_theme", {"path": theme})
+	assert_true(bool(created.get("ok", false)), JSON.stringify(created))
+	assert_ne(FileAccess.get_file_as_string(theme), original)
+	var theme_undo = adapter.execute_tool_direct("blazium_editor_undo", {})
+	assert_true(bool(theme_undo.get("ok", false)), JSON.stringify(theme_undo))
+	assert_eq(FileAccess.get_file_as_string(theme), original)
+	var source := "res://tests/_agent_import_src.txt"
+	var imported := "res://tests/_agent_import_dst.txt"
+	_write_text(source, "source-body")
+	_write_text(imported, "dest-body")
+	adapter.execute_tool_direct("blazium_agent_probe_reset", {})
+	var copied = adapter.execute_tool_direct("blazium_import_asset_copy", {"source_path": source, "dest_path": imported})
+	assert_true(bool(copied.get("ok", false)), JSON.stringify(copied))
+	assert_eq(FileAccess.get_file_as_string(imported), "source-body")
+	var copy_undo = adapter.execute_tool_direct("blazium_editor_undo", {})
+	assert_true(bool(copy_undo.get("ok", false)), JSON.stringify(copy_undo))
+	assert_eq(FileAccess.get_file_as_string(source), "source-body")
+	assert_eq(FileAccess.get_file_as_string(imported), "dest-body")
+	for path in [theme, source, imported]:
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	adapter.cleanup()
+
 func test_verify_game_change_does_not_pass_without_play() -> void:
 	if not _full_catalog():
 		return

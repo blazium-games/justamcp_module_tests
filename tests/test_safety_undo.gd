@@ -77,6 +77,24 @@ func test_shader_edit_undo_restores_the_file() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	adapter.cleanup()
 
+func test_patch_script_undo_restores_the_file() -> void:
+	if not _full_catalog():
+		return
+	var path := "res://tests/_agent_patch.gd"
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	file.store_string("extends Node\nfunc _ready() -> void:\n\tpass\n")
+	file.close()
+	var adapter = MCPTestAdapter.create()
+	adapter.execute_tool_direct("blazium_agent_probe_reset", {})
+	var patched = adapter.execute_tool_direct("blazium_patch_script", {"path": path, "anchor": "pass", "replacement": "return"})
+	assert_true(patched.get("ok", false), JSON.stringify(patched))
+	assert_true(FileAccess.get_file_as_string(path).find("return") >= 0)
+	var undo = adapter.execute_tool_direct("blazium_editor_undo", {})
+	assert_true(undo.get("ok", false), JSON.stringify(undo))
+	assert_true(FileAccess.get_file_as_string(path).find("pass") >= 0, FileAccess.get_file_as_string(path))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	adapter.cleanup()
+
 func test_checkpoint_diffs_and_restores_a_script_snapshot() -> void:
 	if not _full_catalog():
 		return

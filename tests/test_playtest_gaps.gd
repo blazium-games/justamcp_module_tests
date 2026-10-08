@@ -82,7 +82,9 @@ func test_luau_parse_error_and_xr_disabled() -> void:
 	assert_true(luau_text.findn("luau") >= 0 or luau_text.findn("parse") >= 0, luau_text)
 	for tool_name in ["blazium_xr_set_head_pose", "blazium_xr_set_controller", "blazium_xr_capture"]:
 		var xr = adapter.execute_tool_direct(tool_name, {})
-		assert_true(JSON.stringify(xr).find("XR not enabled") >= 0, tool_name + " " + JSON.stringify(xr))
+		var xr_text := JSON.stringify(xr)
+		assert_true(xr_text.find("XR not enabled") >= 0 or xr_text.find("unavailable") >= 0, tool_name + " " + xr_text)
+		assert_false(bool(xr.get("available", true)), xr_text)
 	adapter.cleanup()
 
 func _full_catalog() -> bool:

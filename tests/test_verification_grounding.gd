@@ -70,6 +70,19 @@ func test_grounding_map_and_relations() -> void:
 	assert_true(grounded_text.find("extreme scale") >= 0, grounded_text)
 	assert_true(grounded_text.find("overlapping collision") >= 0, grounded_text)
 
+	var mesh := ArrayMesh.new()
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = PackedVector3Array([Vector3(0, 0, 0), Vector3(2000, 0, 0), Vector3(0, 1, 0)])
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	var mesh_path := "res://tests/_agent_mesh.tres"
+	assert_eq(ResourceSaver.save(mesh, mesh_path), OK)
+	var mesh_check = adapter.execute_tool_direct("blazium_validate_import", {"path": mesh_path})
+	var mesh_text := JSON.stringify(mesh_check)
+	assert_true(mesh_text.find("UV") >= 0, mesh_text)
+	assert_true(mesh_text.find("scale") >= 0, mesh_text)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(mesh_path))
+
 	adapter.set_test_scene_root(null)
 	adapter.cleanup()
 

@@ -23,6 +23,42 @@ func test_one_undo_reverts_a_multi_step_batch() -> void:
 	assert_eq(int(value.get("value", -1)), 0, "One editor_undo should revert both batch steps")
 	adapter.cleanup()
 
+func test_batch_property_undo_and_stale_before() -> void:
+	if not _full_catalog():
+		return
+	var root := Node2D.new()
+	root.name = "BatchRoot"
+	add_child(root)
+	autoqfree(root)
+	var item := Polygon2D.new()
+	item.name = "Patch"
+	item.position = Vector2(1, 2)
+	root.add_child(item)
+	var adapter = MCPTestAdapter.create()
+	adapter.set_test_scene_root(root)
+	adapter.execute_tool_direct("blazium_agent_probe_reset", {})
+	var stale = adapter.execute_tool_direct("blazium_batch_set_property", {
+		"type": "Polygon2D",
+		"property": "position",
+		"value": Vector2(9, 9),
+		"before": Vector2(0, 0),
+	})
+	assert_false(bool(stale.get("ok", true)), JSON.stringify(stale))
+	assert_eq(item.position, Vector2(1, 2))
+	var applied = adapter.execute_tool_direct("blazium_batch_set_property", {
+		"type": "Polygon2D",
+		"property": "position",
+		"value": Vector2(4, 5),
+		"before": Vector2(1, 2),
+	})
+	assert_true(applied.get("ok", false), JSON.stringify(applied))
+	assert_eq(item.position, Vector2(4, 5))
+	var undo = adapter.execute_tool_direct("blazium_editor_undo", {})
+	assert_true(undo.get("ok", false), JSON.stringify(undo))
+	assert_eq(item.position, Vector2(1, 2), JSON.stringify(undo))
+	adapter.set_test_scene_root(null)
+	adapter.cleanup()
+
 func test_checkpoint_diffs_and_restores_a_script_snapshot() -> void:
 	if not _full_catalog():
 		return

@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=3 format=3 uid="uid://dkigrs6jkc674"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_1"]
 
@@ -20,3 +20,5 @@ mesh = SubResource("BoxMesh_1")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_1")
+
+[node name="Skeleton3D" type="Skeleton3D" parent="."]

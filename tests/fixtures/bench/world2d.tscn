@@ -1,17 +1,31 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=11 format=3 uid="uid://c1su784w84sp8"]
 
-[ext_resource type="Script" path="res://tests/fixtures/bench/sample_script.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://tests/fixtures/bench/icon.png" id="2_tex"]
+[ext_resource type="Script" uid="uid://bsew2s7auf8ow" path="res://tests/fixtures/bench/sample_script.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://5lksm7x6rsm4" path="res://tests/fixtures/bench/icon.png" id="2_tex"]
 [ext_resource type="TileSet" path="res://tests/fixtures/bench/sample_tileset.tres" id="3_tileset"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
 size = Vector2(16, 16)
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_1"]
+particle_flag_disable_z = true
+gravity = Vector3(0, 98, 0)
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_1"]
 vertices = PackedVector2Array(-32, -32, 32, -32, 32, 32, -32, 32)
 polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_idle"]
+animation = &"bench"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_idle"]
+
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_1"]
+states/idle/node = SubResource("AnimationNodeAnimation_idle")
+states/idle/position = Vector2(400, 100)
+transitions = ["Start", "idle", SubResource("AnimationNodeStateMachineTransition_idle")]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_1"]
 
 [node name="World2D" type="Node2D"]
 script = ExtResource("1_script")
@@ -41,3 +55,10 @@ text = "Bench"
 
 [node name="NavigationRegion2D" type="NavigationRegion2D" parent="."]
 navigation_polygon = SubResource("NavigationPolygon_1")
+
+[node name="AnimationTree" type="AnimationTree" parent="."]
+tree_root = SubResource("AnimationNodeStateMachine_1")
+anim_player = NodePath("../AnimationPlayer")
+
+[node name="AnimatedSprite" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_1")

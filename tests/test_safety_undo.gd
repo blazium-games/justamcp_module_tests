@@ -300,6 +300,37 @@ func test_theme_and_import_copy_undo_restore_files() -> void:
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	adapter.cleanup()
 
+func test_game_shot_and_client_config_undo_restore_files() -> void:
+	if not _full_catalog():
+		return
+	var adapter = MCPTestAdapter.create()
+	var shot := "res://tests/_agent_game_shot.png"
+	var image := Image.create(8, 8, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0, 0, 1))
+	image.save_png(shot)
+	var shot_original := FileAccess.get_file_as_bytes(shot)
+	adapter.execute_tool_direct("blazium_agent_probe_reset", {})
+	var captured = adapter.execute_tool_direct("blazium_editor_screenshot_game", {"path": shot})
+	assert_true(bool(captured.get("ok", false)), JSON.stringify(captured))
+	assert_ne(FileAccess.get_file_as_bytes(shot), shot_original)
+	var shot_undo = adapter.execute_tool_direct("blazium_editor_undo", {})
+	assert_true(bool(shot_undo.get("ok", false)), JSON.stringify(shot_undo))
+	assert_eq(FileAccess.get_file_as_bytes(shot), shot_original)
+	var config := "res://tests/_agent_client_undo.toml"
+	var config_original := "kept-config\n"
+	_write_text(config, config_original)
+	adapter.execute_tool_direct("blazium_agent_probe_reset", {})
+	var written = adapter.execute_tool_direct("blazium_write_client_config", {"client": "cursor", "path": config})
+	assert_true(bool(written.get("ok", false)), JSON.stringify(written))
+	assert_ne(FileAccess.get_file_as_string(config), config_original)
+	var config_undo = adapter.execute_tool_direct("blazium_editor_undo", {})
+	assert_true(bool(config_undo.get("ok", false)), JSON.stringify(config_undo))
+	assert_eq(FileAccess.get_file_as_string(config), config_original)
+	for path in [shot, config]:
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	adapter.cleanup()
+
 func test_verify_game_change_does_not_pass_without_play() -> void:
 	if not _full_catalog():
 		return

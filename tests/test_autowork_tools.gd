@@ -9,8 +9,8 @@ func test_autowork_tools():
 	executor.setup_sync()
 	
 	var tests = [
-		{"tool": "autowork_run_test_by_name", "params": { "test_name": "non_existent_test_123" }},
-		{"tool": "blazium_autowork_run_test_by_name", "params": { "test_name": "non_existent_test_123" }}
+		{"tool": "autowork_run_test_script", "params": { "path": "res://tests/fixtures/bench/test_mcp_pass.gd", "timeout": 1 }},
+		{"tool": "blazium_autowork_run_test_script", "params": { "path": "res://tests/fixtures/bench/test_mcp_pass.gd", "timeout": 1 }}
 	]
 	
 	for t in tests:

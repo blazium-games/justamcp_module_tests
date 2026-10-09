@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://c1su784w84sp8"]
+[gd_scene load_steps=12 format=3 uid="uid://c1su784w84sp8"]
 
 [ext_resource type="Script" uid="uid://bsew2s7auf8ow" path="res://tests/fixtures/bench/sample_script.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://5lksm7x6rsm4" path="res://tests/fixtures/bench/icon.png" id="2_tex"]
@@ -24,6 +24,8 @@ animation = &"bench"
 states/idle/node = SubResource("AnimationNodeAnimation_idle")
 states/idle/position = Vector2(400, 100)
 transitions = ["Start", "idle", SubResource("AnimationNodeStateMachineTransition_idle")]
+
+[sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_1"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_1"]
 
@@ -58,6 +60,10 @@ navigation_polygon = SubResource("NavigationPolygon_1")
 
 [node name="AnimationTree" type="AnimationTree" parent="."]
 tree_root = SubResource("AnimationNodeStateMachine_1")
+anim_player = NodePath("../AnimationPlayer")
+
+[node name="BlendTree" type="AnimationTree" parent="."]
+tree_root = SubResource("AnimationNodeBlendTree_1")
 anim_player = NodePath("../AnimationPlayer")
 
 [node name="AnimatedSprite" type="AnimatedSprite2D" parent="."]

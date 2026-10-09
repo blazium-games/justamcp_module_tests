@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://c1su784w84sp8"]
+[gd_scene load_steps=14 format=3 uid="uid://c1su784w84sp8"]
 
 [ext_resource type="Script" uid="uid://bsew2s7auf8ow" path="res://tests/fixtures/bench/sample_script.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://5lksm7x6rsm4" path="res://tests/fixtures/bench/icon.png" id="2_tex"]
@@ -10,6 +10,25 @@ size = Vector2(16, 16)
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_1"]
 particle_flag_disable_z = true
 gravity = Vector3(0, 98, 0)
+
+[sub_resource type="Animation" id="Animation_bench"]
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(0, 0)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_bench"]
+_data = {
+&"bench": SubResource("Animation_bench")
+}
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_1"]
 vertices = PackedVector2Array(-32, -32, 32, -32, 32, 32, -32, 32)
@@ -54,6 +73,9 @@ process_material = SubResource("ParticleProcessMaterial_1")
 text = "Bench"
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_bench")
+}
 
 [node name="NavigationRegion2D" type="NavigationRegion2D" parent="."]
 navigation_polygon = SubResource("NavigationPolygon_1")

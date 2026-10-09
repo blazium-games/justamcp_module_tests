@@ -1,4 +1,11 @@
-[gd_scene load_steps=3 format=3 uid="uid://dkigrs6jkc674"]
+[gd_scene load_steps=5 format=3 uid="uid://dkigrs6jkc674"]
+
+[ext_resource type="Shader" uid="uid://bvackw60vq7ag" path="res://tests/fixtures/bench/sample_shader.gdshader" id="1_shader"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_1"]
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/albedo = Color(1, 1, 1, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_1"]
 
@@ -8,6 +15,7 @@ background_mode = 1
 [node name="World3D" type="Node3D"]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+material_override = SubResource("ShaderMaterial_1")
 mesh = SubResource("BoxMesh_1")
 
 [node name="Camera3D" type="Camera3D" parent="."]

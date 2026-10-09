@@ -331,6 +331,23 @@ func test_game_shot_and_client_config_undo_restore_files() -> void:
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	adapter.cleanup()
 
+func test_qa_stop_undo_restores_evidence_file() -> void:
+	if not _full_catalog():
+		return
+	var adapter = MCPTestAdapter.create()
+	var evidence := "user://justamcp_qa_last.json"
+	var original := "kept-qa\n"
+	_write_text(evidence, original)
+	adapter.execute_tool_direct("blazium_agent_probe_reset", {})
+	adapter.execute_tool_direct("blazium_qa_stop", {})
+	assert_ne(FileAccess.get_file_as_string(evidence), original)
+	var undone = adapter.execute_tool_direct("blazium_editor_undo", {})
+	assert_true(bool(undone.get("ok", false)), JSON.stringify(undone))
+	assert_eq(FileAccess.get_file_as_string(evidence), original)
+	if FileAccess.file_exists(evidence):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(evidence))
+	adapter.cleanup()
+
 func test_verify_game_change_does_not_pass_without_play() -> void:
 	if not _full_catalog():
 		return

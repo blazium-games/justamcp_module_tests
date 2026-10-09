@@ -310,6 +310,42 @@ func test_verify_game_change_does_not_pass_without_play() -> void:
 	assert_false(bool(checked.get("passed", true)), JSON.stringify(checked))
 	adapter.cleanup()
 
+func test_pixel_art_and_knob_undo_restore_files() -> void:
+	if not _full_catalog():
+		return
+	var adapter = MCPTestAdapter.create()
+	var source := "res://tests/_agent_pixel_src.png"
+	var dest_name := "_agent_pixel_dst.png"
+	var dest := "res://assets/generated/" + dest_name
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://assets/generated"))
+	var image := Image.create(8, 8, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0, 1, 0))
+	image.save_png(dest)
+	var original := FileAccess.get_file_as_bytes(dest)
+	image.fill(Color(1, 0, 0))
+	image.save_png(source)
+	adapter.execute_tool_direct("blazium_agent_probe_reset", {})
+	var saved = adapter.execute_tool_direct("blazium_save_pixel_art", {"source_path": source, "filename": dest_name})
+	assert_true(bool(saved.get("ok", false)), JSON.stringify(saved))
+	assert_ne(FileAccess.get_file_as_bytes(dest), original)
+	var pixel_undo = adapter.execute_tool_direct("blazium_editor_undo", {})
+	assert_true(bool(pixel_undo.get("ok", false)), JSON.stringify(pixel_undo))
+	assert_eq(FileAccess.get_file_as_bytes(dest), original)
+	var knobs := "res://tests/_agent_knobs.json"
+	var knob_original := "{\"kept\":true}\n"
+	_write_text(knobs, knob_original)
+	adapter.execute_tool_direct("blazium_agent_probe_reset", {})
+	var committed = adapter.execute_tool_direct("blazium_runtime_commit_knobs", {"path": knobs, "time_scale": 1.0})
+	assert_true(bool(committed.get("ok", false)), JSON.stringify(committed))
+	assert_ne(FileAccess.get_file_as_string(knobs), knob_original)
+	var knob_undo = adapter.execute_tool_direct("blazium_editor_undo", {})
+	assert_true(bool(knob_undo.get("ok", false)), JSON.stringify(knob_undo))
+	assert_eq(FileAccess.get_file_as_string(knobs), knob_original)
+	for path in [source, dest, knobs]:
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	adapter.cleanup()
+
 func _write_text(path: String, text: String) -> void:
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	file.store_string(text)

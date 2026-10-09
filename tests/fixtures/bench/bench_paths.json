@@ -37,6 +37,8 @@
   "section": "application",
   "name": "TestNode",
   "bus_name": "Master",
+  "bus": "Master",
+  "effect_type": "AudioEffectAmplify",
   "action": "ui_accept",
   "method_name": "fixture_method",
   "param_name": "albedo_color",

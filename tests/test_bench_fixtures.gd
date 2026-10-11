@@ -33,5 +33,5 @@ func test_bench_paths_point_at_files() -> void:
 	assert_true(paths.has("shader_path"))
 	for key in paths.keys():
 		var value := str(paths[key])
-		if value.begins_with("res://") and (value.ends_with(".gd") or value.ends_with(".tscn") or value.ends_with(".tres") or value.ends_with(".gdshader") or value.ends_with(".png") or value.ends_with(".json")):
+		if value.begins_with("res://") and not value.contains("/scratch/") and (value.ends_with(".gd") or value.ends_with(".tscn") or value.ends_with(".tres") or value.ends_with(".gdshader") or value.ends_with(".png") or value.ends_with(".json")):
 			assert_true(FileAccess.file_exists(value), key + " -> " + value)

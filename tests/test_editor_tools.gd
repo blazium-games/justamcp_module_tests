@@ -17,12 +17,17 @@ func test_editor_tools():
 	
 	var tests = [
 		{"tool": "editor_clear_output", "params": {}},
-		{"tool": "editor_screenshot_game", "params": {"path": "res://test_screenshot.png"}}
+		{"tool": "editor_screenshot_game", "params": {"path": "res://test_screenshot.png"}},
+		{"tool": "editor_open_scene", "params": {"path": "res://tests/fixtures/bench/world2d.tscn"}},
+		{"tool": "editor_scene_is_loaded", "params": {"path": "res://tests/fixtures/bench/world2d.tscn"}}
 	]
 	
 	for t in tests:
 		var res = executor.execute_tool(t.tool, t.params)
 		assert_true(res.has("ok") or res.has("error"), "Tool failed entirely: " + t.tool)
+		if t.tool == "editor_scene_is_loaded" and bool(res.get("ok", false)):
+			assert_true(bool(res.get("loaded", false)), "world2d.tscn should be the loaded edited scene")
+			assert_eq(str(res.get("scene_path", "")), "res://tests/fixtures/bench/world2d.tscn")
 		
 	# Cleanup
 	var dir = DirAccess.open("res://")
